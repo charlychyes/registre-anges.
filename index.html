@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L'union fait la force les anges</title>
+    <style>
+        :root {
+            --paid: #27ae60; --pending: #e74c3c; --dark: #2c3e50; 
+            --gold: #f1c40f; --blue: #3498db;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 15px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        .header { background: var(--dark); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .event-title { color: var(--gold); text-transform: uppercase; margin: 10px 0; }
+        
+        /* Masquage des fonctions admin par défaut */
+        .admin-ui { display: none; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background: #f8f9fa; font-size: 0.8rem; }
+        
+        .name-bold { font-weight: 800; text-transform: uppercase; color: var(--dark); border-left: 4px solid var(--blue); padding-left: 8px; }
+        
+        .status-badge { padding: 6px 12px; border-radius: 20px; color: white; font-weight: bold; border: none; font-size: 0.8rem; }
+        
+        .footer { margin-top: 30px; text-align: center; padding: 20px; border-top: 1px solid #eee; }
+        .wa-link { background: #25D366; color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 10px; }
+        
+        .admin-login-btn { background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.8rem; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🤝 Registre "Les Anges"</h1>
+        <div class="event-title" id="eventTitle">Cotisation Générale</div>
+        <button class="admin-ui" onclick="changeEvent()" style="background:var(--gold); border:none; padding:5px 10px; border-radius:5px; font-weight:bold; cursor:pointer;">🚀 Changer d'événement</button>
+    </div>
+
+    <div id="summary" style="display: flex; justify-content: space-around; background: #eee; padding: 15px; border-radius: 10px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        </div>
+
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>MEMBRE</th>
+                    <th>MONTANT</th>
+                    <th>STATUT</th>
+                    <th class="admin-ui">ACTION</th>
+                </tr>
+            </thead>
+            <tbody id="memberList"></tbody>
+        </table>
+    </div>
+
+    <div class="admin-ui" style="margin-top: 25px; padding: 20px; border: 2px dashed var(--blue); border-radius: 10px;">
+        <h3 style="margin-top:0;">➕ Ajouter un nouveau membre</h3>
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px;">
+            <input type="text" id="addName" placeholder="NOM COMPLET" style="padding:10px;">
+            <input type="number" id="addAmount" placeholder="Montant" style="padding:10px;">
+            <select id="addCurrency" style="padding:10px;">
+                <option value="CDF">CDF</option><option value="USD">USD</option>
+                <option value="EUR">EUR</option><option value="BIF">BIF</option>
+            </select>
+            <button onclick="addNewMember()" style="background:var(--dark); color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">OK</button>
+        </div>
+        <button onclick="copyReminder()" style="margin-top:15px; background:var(--blue); color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; width:100%;">📢 Copier le rappel pour WhatsApp</button>
+    </div>
+
+    <div class="footer">
+        <p>Pour tout paiement ou information, contactez Charly :</p>
+        <a href="https://wa.me/262639652738" target="_blank" class="wa-link">🟢 WhatsApp : +262 639 652 738</a>
+        <p>Email : <a href="mailto:Charlychyes@gmail.com">Charlychyes@gmail.com</a></p>
+        <button class="admin-login-btn" onclick="askAdminCode()">🔒 Accès Administration</button>
+    </div>
+</div>
+
+<script>
+    const SECRET_CODE = "05102005"; // CHANGEZ VOTRE CODE ICI
+    let isAdmin = false;
+
+    let db = JSON.parse(localStorage.getItem('anges_final_db')) || {
+        current: "Cotisation Générale",
+        events: { "Cotisation Générale": [] }
+    };
+
+    function askAdminCode() {
+        let code = prompt("Entrez le code secret pour modifier :");
+        if (code === SECRET_CODE) {
+            isAdmin = true;
+            document.querySelectorAll('.admin-ui').forEach(el => el.style.display = 'block');
+            render();
+            alert("Mode Admin activé !");
+        } else {
+            alert("Code incorrect.");
+        }
+    }
+
+    function render() {
+        document.getElementById('eventTitle').innerText = db.current;
+        const list = document.getElementById('memberList');
+        const summary = document.getElementById('summary');
+        list.innerHTML = "";
+        
+        let totals = { CDF:0, USD:0, EUR:0, BIF:0 };
+        const members = db.events[db.current] || [];
+
+        members.forEach((m, i) => {
+            if (m.paid) totals[m.currency] += m.amount;
+            
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i+1}</td>
+                <td class="name-bold">${m.name}</td>
+                <td>${m.amount.toLocaleString()} ${m.currency}</td>
+                <td>
+                    <button class="status-badge" onclick="${isAdmin ? `togglePaid(${i})` : ''}" 
+                            style="background:${m.paid ? 'var(--paid)' : 'var(--pending)'}; cursor:${isAdmin ? 'pointer':'default'}">
+                        ${m.paid ? 'PAYÉ' : 'À PAYER'}
+                    </button>
+                </td>
+                <td class="admin-ui" style="display:${isAdmin ? 'table-cell' : 'none'}">
+                    <button onclick="deleteMember(${i})" style="border:none; background:none; cursor:pointer;">🗑️</button>
+                </td>
+            `;
+            list.appendChild(tr);
+        });
+
+        summary.innerHTML = "";
+        for (let cur in totals) {
+            if (totals[cur] >= 0) {
+                summary.innerHTML += `<div><strong>TOTAL ${cur}</strong><br><span style="color:var(--paid)">${totals[cur].toLocaleString()}</span></div>`;
+            }
+        }
+        localStorage.setItem('anges_final_db', JSON.stringify(db));
+    }
+
+    function addNewMember() {
+        let n = document.getElementById('addName').value;
+        let a = parseFloat(document.getElementById('addAmount').value);
+        let c = document.getElementById('addCurrency').value;
+        if (n && a) {
+            db.events[db.current].push({ name: n, amount: a, currency: c, paid: false });
+            render();
+            document.getElementById('addName').value = ""; document.getElementById('addAmount').value = "";
+        }
+    }
+
+    function togglePaid(i) { db.events[db.current][i].paid = !db.events[db.current][i].paid; render(); }
+    
+    function deleteMember(i) { if(confirm("Supprimer ?")) { db.events[db.current].splice(i,1); render(); } }
+
+    function changeEvent() {
+        let n = prompt("Nom de la nouvelle cotisation :");
+        if(n) { db.current = n; if(!db.events[n]) db.events[n] = []; render(); }
+    }
+
+    function copyReminder() {
+        let unpaid = db.events[db.current].filter(m => !m.paid);
+        let msg = `📢 *RAPPEL : ${db.current.toUpperCase()}*\n\n`;
+        unpaid.forEach((m, i) => msg += `${i+1}. *${m.name}* : ${m.amount} ${m.currency}\n`);
+        msg += `\nMerci de contacter Charly pour régulariser. 🙏`;
+        navigator.clipboard.writeText(msg);
+        alert("Rappel copié !");
+    }
+
+    render();
+</script>
+</body>
+</html>
+ 
