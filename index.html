@@ -9,64 +9,66 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --primary: #0a3d62; --accent: #87CEEB; --success: #27ae60; --danger: #c0392b; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; }
-        
-        /* Écran de connexion e-mail */
-        #login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--primary); color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000; }
-        .login-box { background: white; padding: 30px; border-radius: 15px; width: 80%; max-width: 400px; text-align:center; color: var(--primary); }
-
-        .container { max-width: 900px; margin: auto; background: white; min-height: 100vh; }
-        .header { background: var(--primary); color: white; padding: 25px 20px; display: flex; align-items: center; border-bottom: 5px solid var(--accent); }
-        .logo-img { height: 50px; width: 50px; border-radius: 50%; border: 2px solid var(--accent); margin-right: 15px; }
-        
-        .chart-container { width: 200px; margin: 20px auto; }
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); background: #fff; border-bottom: 1px solid #ddd; }
-        .stat-item { padding: 15px; border: 0.5px solid #eee; text-align: center; }
-        .stat-item b { display: block; font-size: 1.1rem; color: var(--primary); }
-
+        :root { --primary: #0a3d62; --accent: #87CEEB; --success: #27ae60; --danger: #c0392b; --bg: #f4f7f6; --text: #333; --card: white; }
+        .dark-mode { --primary: #121212; --accent: #87CEEB; --bg: #1e1e1e; --text: #f4f7f6; --card: #2d2d2d; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
+        #side-menu { position: fixed; left: -250px; top: 0; width: 250px; height: 100%; background: var(--primary); color: white; transition: 0.3s; z-index: 2000; padding-top: 60px; box-shadow: 2px 0 10px rgba(0,0,0,0.3); }
+        #side-menu div { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .menu-btn { font-size: 25px; cursor: pointer; margin-right: 15px; color: var(--accent); }
+        #login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--primary); display:flex; align-items:center; justify-content:center; z-index:3000; }
+        .login-box { background: white; padding: 30px; border-radius: 15px; width: 85%; max-width: 400px; text-align:center; color: #0a3d62; }
+        .container { max-width: 900px; margin: auto; background: var(--card); min-height: 100vh; }
+        .header { background: var(--primary); color: white; padding: 20px; display: flex; align-items: center; border-bottom: 5px solid var(--accent); }
+        .chart-container { width: 180px; margin: 20px auto; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); background: var(--card); }
+        .stat-item { padding: 15px; border: 0.5px solid rgba(0,0,0,0.05); text-align: center; }
+        .stat-item b { display: block; font-size: 1.1rem; color: var(--accent); }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #f8f9fa; padding: 12px; font-size: 0.75rem; color: #7f8c8d; text-transform: uppercase; }
-        td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 0.85rem; }
-
-        .btn { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: white; margin: 2px; }
+        th { background: rgba(0,0,0,0.05); padding: 12px; font-size: 0.75rem; color: var(--text); }
+        td { padding: 12px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); text-align: center; font-size: 0.8rem; }
+        .btn { padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: white; font-size: 0.7rem; }
         .paid { background: var(--success); } .unpaid { background: var(--danger); }
-        .pdf-btn { background: var(--accent); color: var(--primary); font-size: 0.7rem; }
-        .del-text { color: var(--danger); font-size: 0.65rem; cursor: pointer; text-decoration: underline; border: none; background: none; font-weight: bold; }
-
-        .admin-area { display: none; padding: 20px; background: #e1f5fe; border-top: 2px solid var(--accent); }
-        input, select { padding: 12px; margin: 8px 0; width: 90%; border: 1px solid #ccc; border-radius: 8px; }
-        .main-btn { background: var(--primary); color:white; border:none; padding:15px; width:95%; border-radius:8px; font-weight:bold; cursor:pointer; }
+        .pdf-btn { background: var(--accent); color: var(--primary); margin-top: 2px; }
+        .mail-btn { background: #576571; color: white; margin-top: 2px; }
+        .del-text { color: var(--danger); font-size: 0.6rem; cursor: pointer; text-decoration: underline; border: none; background: none; font-weight: bold; display: block; margin-bottom: 4px; }
+        .admin-area { display: none; padding: 20px; background: rgba(135, 206, 235, 0.1); border-top: 2px solid var(--accent); }
+        input, select { padding: 12px; margin: 8px 0; width: 90%; border: 1px solid #ccc; border-radius: 8px; background: var(--card); color: var(--text); }
     </style>
 </head>
 <body>
 
+<div id="side-menu">
+    <div onclick="toggleDarkMode()">🌓 Mode Sombre / Clair</div>
+    <div onclick="showEmails()">📧 Liste des E-mails (Admin)</div>
+    <div onclick="closeMenu()">✖ Fermer le Menu</div>
+</div>
+
 <div id="login-overlay">
     <div class="login-box">
-        <h2 style="margin-top:0">ONE UNIT</h2>
-        <p>Veuillez entrer votre e-mail pour accéder au registre officiel.</p>
-        <input type="email" id="user-email" placeholder="votre@email.com" style="width:100%; box-sizing:border-box;">
-        <button onclick="saveEmail()" class="main-btn" style="margin-top:10px; width:100%">ACCÉDER</button>
+        <h2>ONE UNIT</h2>
+        <p>Entrez votre e-mail pour accéder au registre.</p>
+        <input type="email" id="user-email" placeholder="votre@email.com">
+        <button onclick="saveEmail()" style="background:var(--primary); color:white; border:none; padding:15px; width:100%; border-radius:8px; margin-top:10px; font-weight:bold;">ACCÉDER</button>
     </div>
 </div>
 
 <div class="container">
     <div class="header">
-        <img src="logo.png" class="logo-img" onerror="this.style.display='none'">
+        <span class="menu-btn" onclick="openMenu()">☰</span>
         <div style="flex-grow:1">
-            <h1 style="margin:0; font-size: 1.4rem; letter-spacing: 1px;">ONE UNIT</h1>
+            <h1 style="margin:0; font-size: 1.4rem;">ONE UNIT</h1>
             <small id="live-clock" style="color:var(--accent);"></small>
         </div>
-        <button onclick="askAccess()" id="lock-btn" style="background:none; border:1px solid var(--accent); color:var(--accent); padding:6px; border-radius:5px; font-size: 0.7rem; font-weight:bold;">ADMIN</button>
+        <button onclick="askAccess()" id="lock-btn" style="background:none; border:1px solid var(--accent); color:var(--accent); padding:6px; border-radius:5px; font-size: 0.7rem;">ADMIN</button>
     </div>
 
     <div class="chart-container"><canvas id="myChart"></canvas></div>
 
     <div class="stats-grid">
-        <div class="stat-item">TOTAL USD<br><b id="tUSD">0</b></div>
-        <div class="stat-item">TOTAL CDF<br><b id="tCDF">0</b></div>
-        <div class="stat-item">TOTAL EUR<br><b id="tEUR">0</b></div>
-        <div class="stat-item">TOTAL BIF<br><b id="tBIF">0</b></div>
+        <div class="stat-item">USD<br><b id="tUSD">0</b></div>
+        <div class="stat-item">CDF<br><b id="tCDF">0</b></div>
+        <div class="stat-item">EUR<br><b id="tEUR">0</b></div>
+        <div class="stat-item">BIF<br><b id="tBIF">0</b></div>
     </div>
 
     <table>
@@ -75,65 +77,63 @@
     </table>
 
     <div id="admin" class="admin-area">
-        <h3 style="margin-top:0; color:var(--primary);">NOUVEL ENREGISTREMENT</h3>
+        <h3>NOUVEAU MEMBRE</h3>
         <input type="text" id="name" placeholder="Nom du membre">
         <input type="number" id="amt" placeholder="Montant">
-        <select id="cur">
-            <option value="USD">Dollar (USD)</option>
-            <option value="CDF">Franc Congolais (CDF)</option>
-            <option value="EUR">Euro (EUR)</option>
-            <option value="BIF">Franc Burundais (BIF)</option>
-        </select>
-        <button onclick="add()" class="main-btn">VALIDER</button>
+        <select id="cur"><option value="USD">USD</option><option value="CDF">CDF</option><option value="EUR">EUR</option><option value="BIF">BIF</option></select>
+        <button onclick="add()" style="background:var(--primary); color:white; padding:15px; width:100%; border:none; border-radius:8px; font-weight:bold;">ENREGISTRER</button>
     </div>
 </div>
 
 <script>
-    // Configuration Firebase (La même que précédemment)
     const firebaseConfig = {
         apiKey: "AIzaSyB78cC9gnYCgPjd9ikZjboHqWq86-j-7YI",
         authDomain: "oneunit-dfa62.firebaseapp.com",
         databaseURL: "https://oneunit-dfa62-default-rtdb.firebaseio.com",
         projectId: "oneunit-dfa62",
         storageBucket: "oneunit-dfa62.firebasestorage.app",
-        messagingSenderId: "837193571803",
-        appId: "1:837193571803:web:b921421a5765c363943340"
+        messagingSenderId: "837193571803", appId: "1:837193571803:web:b921421a5765c363943340"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const membersRef = db.ref('members');
-    let isAdmin = false;
-    let myChart;
+    const logsRef = db.ref('logs');
+    let isAdmin = false; let myChart;
 
-    // Gestion de l'e-mail au démarrage
-    if(localStorage.getItem('oneUnitEmail')) {
-        document.getElementById('login-overlay').style.display = 'none';
-    }
+    if(localStorage.getItem('oneUnitEmail')) document.getElementById('login-overlay').style.display = 'none';
+
+    function openMenu() { document.getElementById('side-menu').style.left = '0'; }
+    function closeMenu() { document.getElementById('side-menu').style.left = '-250px'; }
+    function toggleDarkMode() { document.body.classList.toggle('dark-mode'); closeMenu(); }
 
     function saveEmail() {
         const email = document.getElementById('user-email').value;
         if(email.includes('@')) {
             localStorage.setItem('oneUnitEmail', email);
+            logsRef.push({ email: email, date: new Date().toLocaleString() });
             document.getElementById('login-overlay').style.display = 'none';
-        } else {
-            alert("Veuillez entrer une adresse e-mail valide.");
         }
     }
 
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('live-clock').innerText = now.toLocaleString('fr-FR');
+    function showEmails() {
+        if(!isAdmin) return alert("Accès Admin requis");
+        logsRef.once('value', (snap) => {
+            const data = snap.val();
+            let list = "E-MAILS ENREGISTRÉS :\n\n";
+            if(data) Object.values(data).forEach(log => list += `- ${log.email}\n`);
+            alert(list);
+        });
+        closeMenu();
     }
+
+    function updateClock() { document.getElementById('live-clock').innerText = new Date().toLocaleString('fr-FR'); }
     setInterval(updateClock, 1000);
 
     function askAccess() {
-        if(prompt("Code d'accès Admin :") === "05102005") {
+        if(prompt("Code Admin :") === "05102005") {
             isAdmin = true;
             document.getElementById('admin').style.display = 'block';
-            document.getElementById('lock-btn').innerText = "MODE ADMIN";
-            document.getElementById('lock-btn').style.background = "#27ae60";
-            document.getElementById('lock-btn').style.color = "white";
+            document.getElementById('lock-btn').innerText = "ADMIN ON";
             renderList();
         }
     }
@@ -141,108 +141,72 @@
     function add() {
         const n = document.getElementById('name').value;
         const a = parseFloat(document.getElementById('amt').value);
-        const d = new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
         if(n && a) {
-            membersRef.push({ 
-                name: n, 
-                amount: a, 
-                currency: document.getElementById('cur').value, 
-                paid: false, 
-                date: d,
-                recordedBy: localStorage.getItem('oneUnitEmail') 
-            });
+            membersRef.push({ name: n, amount: a, currency: document.getElementById('cur').value, paid: false, date: new Date().toLocaleString('fr-FR', {dateStyle:'short', timeStyle:'short'}) });
             document.getElementById('name').value = ""; document.getElementById('amt').value = "";
         }
     }
 
-    function removeMember(key) {
-        if(confirm("Supprimer ce membre définitivement ?")) {
-            membersRef.child(key).remove();
-        }
-    }
-
-    function toggle(key, status) {
-        if(isAdmin) membersRef.child(key).update({ paid: !status });
-    }
+    function removeMember(key) { if(confirm("Supprimer ?")) membersRef.child(key).remove(); }
+    function toggle(key, status) { if(isAdmin) membersRef.child(key).update({ paid: !status }); }
 
     function generatePDF(name, amount, curr, date) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
-        // Design Bleu Ciel
-        doc.setDrawColor(135, 206, 235); 
-        doc.setLineWidth(2);
-        doc.rect(10, 10, 190, 100);
+        doc.setDrawColor(135, 206, 235); doc.setLineWidth(2); doc.rect(10, 10, 190, 80);
+        doc.setFontSize(22); doc.setTextColor(10, 61, 98); doc.text("ONE UNIT", 105, 30, { align: "center" });
+        doc.setFontSize(12); doc.setTextColor(0,0,0);
+        doc.text(`Membre : ${name.toUpperCase()}`, 20, 50);
+        doc.text(`Montant : ${amount} ${curr}`, 20, 60);
+        doc.text(`Date : ${date || '---'}`, 20, 70);
+        doc.save(`Recu_${name}.pdf`);
+    }
 
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(22);
-        doc.setTextColor(10, 61, 98); // Bleu marine
-        doc.text("ONE UNIT", 105, 30, { align: "center" });
-        
-        doc.setFontSize(10);
-        doc.setTextColor(135, 206, 235); // Bleu ciel
-        doc.text("REÇU OFFICIEL DE TRANSACTION", 105, 38, { align: "center" });
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`Membre : ${name.toUpperCase()}`, 20, 60);
-        doc.text(`Montant versé : ${amount} ${curr}`, 20, 70);
-        doc.text(`Date : ${date || 'Non spécifiée'}`, 20, 80);
-        
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(39, 174, 96);
-        doc.text("STATUT : PAIEMENT CONFIRMÉ", 105, 95, { align: "center" });
-
-        doc.save(`OneUnit_${name}.pdf`);
+    function sendEmail(name, amount, curr, date) {
+        const email = prompt("Adresse e-mail du membre :");
+        if(email) {
+            const sub = encodeURIComponent(`Facture ONE UNIT - ${name}`);
+            const body = encodeURIComponent(`Bonjour ${name},\n\nVotre paiement de ${amount} ${curr} a été validé le ${date}.\n\nMerci,\nL'Administration ONE UNIT.`);
+            window.location.href = `mailto:${email}?subject=${sub}&body=${body}`;
+        }
     }
 
     let currentData = {};
-    membersRef.on('value', (snap) => {
-        currentData = snap.val() || {};
-        renderList();
-    });
+    membersRef.on('value', (snap) => { currentData = snap.val() || {}; renderList(); });
 
     function renderList() {
         const list = document.getElementById('list');
         list.innerHTML = "";
         let t = {USD:0, CDF:0, EUR:0, BIF:0}, pCount=0, uCount=0;
-
         Object.keys(currentData).forEach(key => {
             const m = currentData[key];
             if(m.paid) { t[m.currency] += m.amount; pCount++; } else { uCount++; }
             list.innerHTML += `<tr>
                 <td style="text-align:left">
                     ${isAdmin ? `<button onclick="removeMember('${key}')" class="del-text">DELETE</button>` : ''}
-                    <b>${m.name.toUpperCase()}</b><br><small style="color:#888">${m.date || 'Archives'}</small>
+                    <b>${m.name.toUpperCase()}</b><br><small>${m.date || '---'}</small>
                 </td>
-                <td><b>${m.amount}</b> ${m.currency}</td>
+                <td>${m.amount} ${m.currency}</td>
                 <td>
                     <button onclick="toggle('${key}', ${m.paid})" class="btn ${m.paid ? 'paid':'unpaid'}">${m.paid ? 'PAYÉ':'À PAYER'}</button>
-                    ${m.paid ? `<button onclick="generatePDF('${m.name}', ${m.amount}, '${m.currency}', '${m.date}')" class="btn pdf-btn">PDF</button>` : ''}
+                    ${m.paid ? `<br><button onclick="generatePDF('${m.name}', ${m.amount}, '${m.currency}', '${m.date}')" class="btn pdf-btn">PDF</button>
+                    <button onclick="sendEmail('${m.name}', ${m.amount}, '${m.currency}', '${m.date}')" class="btn mail-btn">MAIL</button>` : ''}
                 </td>
             </tr>`;
         });
-
-        ['USD','CDF','EUR','BIF'].forEach(c => document.getElementById('t'+c).innerText = t[c] + (c === 'USD' ? ' $' : c === 'EUR' ? ' €' : ''));
+        ['USD','CDF','EUR','BIF'].forEach(c => document.getElementById('t'+c).innerText = t[c]);
         updateChart(pCount, uCount);
     }
 
     function updateChart(p, u) {
         const ctx = document.getElementById('myChart').getContext('2d');
         if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Payés', 'À Payer'],
-                datasets: [{ data: [p, u], backgroundColor: ['#27ae60', '#c0392b'], borderWidth: 0 }]
-            },
-            options: { plugins: { legend: { position: 'bottom' } }, cutout: '75%' }
-        });
+        myChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Payés', 'À Payer'], datasets: [{ data: [p, u], backgroundColor: ['#27ae60', '#c0392b'], borderWidth:0 }] }, options: { plugins: { legend: { display: false } }, cutout: '80%' } });
     }
 </script>
 </body>
 </html>
 
 
+    
     
