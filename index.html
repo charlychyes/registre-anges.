@@ -3,60 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ONE UNIT</title>
+    <title>ONE UNIT - PRO</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --primary: #1e272e; --accent: #d4af37; --success: #27ae60; --danger: #c0392b; --border: #dcdde1; }
+        :root { --primary: #1e272e; --accent: #d4af37; --success: #27ae60; --danger: #c0392b; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
-        .container { max-width: 800px; margin: auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .container { max-width: 900px; margin: auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         .header { background: var(--primary); color: white; padding: 20px; display: flex; align-items: center; border-bottom: 4px solid var(--accent); }
-        .logo { height: 50px; width: 50px; border-radius: 50%; border: 2px solid var(--accent); margin-right: 15px; background: white; }
-        .stats { display: flex; background: #fff; border-bottom: 1px solid var(--border); text-align: center; }
-        .stat-item { flex: 1; padding: 15px; border-right: 1px solid var(--border); }
-        .stat-item b { display: block; font-size: 1.2rem; color: var(--primary); }
+        .chart-container { width: 200px; margin: 20px auto; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); background: #fff; border-bottom: 1px solid #ddd; text-align: center; }
+        .stat-item { padding: 15px; border: 1px solid #eee; }
+        .stat-item b { display: block; font-size: 1.1rem; color: var(--primary); }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #f8f9fa; padding: 12px; font-size: 0.8rem; color: #7f8c8d; text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); text-align: center; }
-        .btn-status { padding: 8px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: white; }
+        th { background: #f8f9fa; padding: 10px; font-size: 0.75rem; }
+        td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; font-size: 0.9rem; }
+        .btn { padding: 6px 10px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; color: white; margin: 2px; }
         .paid { background: var(--success); } .unpaid { background: var(--danger); }
+        .pdf-btn { background: #576571; font-size: 0.7rem; }
         .admin-area { display: none; padding: 20px; background: #f9f9f9; border-top: 2px solid var(--accent); }
-        input, select, button.add { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; }
+        input, select { padding: 8px; margin: 5px; width: 80%; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <img src="logo.png" class="logo" onerror="this.style.display='none'">
         <div style="flex-grow:1">
-            <h1 style="margin:0; font-size:1.5rem; letter-spacing: 1px;">ONE UNIT</h1>
-            <small style="color:var(--accent); font-weight: bold;">SYSTÈME DE GESTION LIVE</small>
+            <h1 style="margin:0;">ONE UNIT</h1>
+            <small id="live-clock" style="color:var(--accent)"></small>
         </div>
-        <span onclick="askAccess()" id="lock-btn" style="cursor:pointer; font-size:0.8rem; border: 1px solid var(--accent); padding: 5px; border-radius: 4px;">ADMIN 🔒</span>
+        <button onclick="askAccess()" id="lock-btn" style="background:none; border:1px solid gold; color:gold; padding:5px; border-radius:5px;">ADMIN 🔒</button>
     </div>
 
-    <div class="stats" id="summary">
-        <div class="stat-item">TOTAL COLLECTÉ (USD)<br><b id="totalUSD">0</b></div>
-        <div class="stat-item">TOTAL COLLECTÉ (CDF)<br><b id="totalCDF">0</b></div>
+    <div class="chart-container"><canvas id="myChart"></canvas></div>
+
+    <div class="stats-grid" id="summary">
+        <div class="stat-item">USD<br><b id="tUSD">0</b></div>
+        <div class="stat-item">CDF<br><b id="tCDF">0</b></div>
+        <div class="stat-item">EURO<br><b id="tEUR">0</b></div>
+        <div class="stat-item">BIF<br><b id="tBIF">0</b></div>
     </div>
 
     <table>
-        <thead><tr><th>MEMBRE</th><th>MONTANT</th><th>STATUT</th></tr></thead>
+        <thead><tr><th>MEMBRE / DATE</th><th>MONTANT</th><th>ACTION</th></tr></thead>
         <tbody id="list"></tbody>
     </table>
 
     <div id="admin" class="admin-area">
-        <h3 style="margin-top:0;">PANNEAU ADMINISTRATEUR</h3>
+        <h3>NOUVELLE ENTRÉE</h3>
         <input type="text" id="name" placeholder="Nom du membre">
         <input type="number" id="amt" placeholder="Montant">
-        <select id="cur"><option value="USD">USD</option><option value="CDF">CDF</option></select>
-        <button onclick="add()" class="add" style="background:var(--primary); color:white; cursor:pointer;">AJOUTER AU REGISTRE</button>
+        <select id="cur">
+            <option value="USD">USD ($)</option>
+            <option value="CDF">CDF (FC)</option>
+            <option value="EUR">EURO (€)</option>
+            <option value="BIF">BIF (FBu)</option>
+        </select>
+        <button onclick="add()" style="background:var(--primary); color:white; padding:10px; width:85%; cursor:pointer;">VALIDER</button>
     </div>
 </div>
 
 <script>
-    // Configuration extraite de tes captures d'écran
     const firebaseConfig = {
         apiKey: "AIzaSyB78cC9gnYCgPjd9ikZjboHqWq86-j-7YI",
         authDomain: "oneunit-dfa62.firebaseapp.com",
@@ -71,52 +81,82 @@
     const db = firebase.database();
     const membersRef = db.ref('members');
     let isAdmin = false;
+    let myChart;
 
-    // Utilisation de ton code secret personnel
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('live-clock').innerText = now.toLocaleString('fr-FR');
+    }
+    setInterval(updateClock, 1000);
+
     function askAccess() {
-        if(prompt("Code d'accès ONE UNIT :") === "05102005") {
+        if(prompt("Code Secret :") === "05102005") {
             isAdmin = true;
             document.getElementById('admin').style.display = 'block';
-            document.getElementById('lock-btn').innerText = "MODE ADMIN ✅";
-            document.getElementById('lock-btn').style.background = "#27ae60";
+            document.getElementById('lock-btn').innerText = "ADMIN ✅";
         }
     }
 
     function add() {
         const n = document.getElementById('name').value;
         const a = parseFloat(document.getElementById('amt').value);
+        const d = new Date().toLocaleString('fr-FR');
         if(n && a) {
-            membersRef.push({ name: n, amount: a, currency: document.getElementById('cur').value, paid: false });
+            membersRef.push({ name: n, amount: a, currency: document.getElementById('cur').value, paid: false, date: d });
             document.getElementById('name').value = ""; document.getElementById('amt').value = "";
         }
     }
 
     function toggle(key, status) {
-        if(isAdmin) {
-            membersRef.child(key).update({ paid: !status });
-        } else {
-            alert("Accès refusé. Veuillez vous connecter en tant qu'administrateur.");
-        }
+        if(isAdmin) membersRef.child(key).update({ paid: !status });
+    }
+
+    function generatePDF(name, amount, curr, date) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(22); doc.text("REÇU ONE UNIT", 20, 30);
+        doc.setFontSize(14); doc.text(`Membre: ${name.toUpperCase()}`, 20, 50);
+        doc.text(`Montant: ${amount} ${curr}`, 20, 60);
+        doc.text(`Date: ${date}`, 20, 70);
+        doc.text("Statut: PAYE - Merci pour votre contribution", 20, 90);
+        doc.save(`Recu_${name}.pdf`);
     }
 
     membersRef.on('value', (snap) => {
         const data = snap.val() || {};
         const list = document.getElementById('list');
         list.innerHTML = "";
-        let tUSD = 0, tCDF = 0;
+        let t = {USD:0, CDF:0, EUR:0, BIF:0}, pCount=0, uCount=0;
 
         Object.keys(data).forEach(key => {
             const m = data[key];
-            if(m.paid) { if(m.currency === 'USD') tUSD += m.amount; else tCDF += m.amount; }
+            if(m.paid) { t[m.currency] += m.amount; pCount++; } else { uCount++; }
             list.innerHTML += `<tr>
-                <td style="text-align:left"><b>${m.name.toUpperCase()}</b></td>
+                <td style="text-align:left"><b>${m.name.toUpperCase()}</b><br><small>${m.date || ''}</small></td>
                 <td>${m.amount} ${m.currency}</td>
-                <td><button onclick="toggle('${key}', ${m.paid})" class="btn-status ${m.paid ? 'paid':'unpaid'}">${m.paid ? 'PAYÉ':'À PAYER'}</button></td>
+                <td>
+                    <button onclick="toggle('${key}', ${m.paid})" class="btn ${m.paid ? 'paid':'unpaid'}">${m.paid ? 'PAYÉ':'À PAYER'}</button>
+                    ${m.paid ? `<button onclick="generatePDF('${m.name}', ${m.amount}, '${m.currency}', '${m.date}')" class="btn pdf-btn">PDF 📄</button>` : ''}
+                </td>
             </tr>`;
         });
-        document.getElementById('totalUSD').innerText = tUSD + " $";
-        document.getElementById('totalCDF').innerText = tCDF + " FC";
+
+        ['USD','CDF','EUR','BIF'].forEach(c => document.getElementById('t'+c).innerText = t[c]);
+        updateChart(pCount, uCount);
     });
+
+    function updateChart(p, u) {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        if(myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Payés', 'À Payer'],
+                datasets: [{ data: [p, u], backgroundColor: ['#27ae60', '#c0392b'] }]
+            },
+            options: { plugins: { legend: { position: 'bottom' } } }
+        });
+    }
 </script>
 </body>
 </html>
