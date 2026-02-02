@@ -11,7 +11,7 @@
         :root { 
             --primary: #0a3d62; --accent: #87CEEB; --success: #27ae60; --danger: #c0392b; --warning: #e67e22; 
             --bg: #f4f7f6; --text: #333; 
-            --card: rgba(255, 255, 255, 0.6); /* Transparence augmentée */
+            --card: rgba(255, 255, 255, 0.6); 
             --delete: #7f8c8d; 
         }
         .dark-mode { 
@@ -21,7 +21,7 @@
         
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; transition: 0.3s; overflow-x: hidden; }
 
-        /* FILIGRANE GÉANT EN ARRIÈRE-PLAN */
+        /* FILIGRANE ARRIÈRE-PLAN GÉANT */
         body::before {
             content: "ONE-UNIT";
             position: fixed;
@@ -40,10 +40,10 @@
         .header { background: var(--primary); color: white; padding: 15px; display: flex; align-items: center; border-bottom: 4px solid var(--accent); position: sticky; top:0; z-index: 100; }
         .page { padding: 10px; max-width: 800px; margin: auto; position: relative; z-index: 1; }
 
-        /* EFFET GLASSMORPHISM POUSSÉ */
+        /* DESIGN TRANSPARENT (GLASSMORPHISM) */
         .chart-container, .stat-card, table, #admin-panel { 
             background: var(--card) !important; 
-            backdrop-filter: blur(10px); /* Flou plus fort pour la lisibilité */
+            backdrop-filter: blur(10px); 
             -webkit-backdrop-filter: blur(10px);
             border-radius: 12px; 
             border: 1px solid rgba(255,255,255,0.4);
@@ -62,6 +62,8 @@
         
         .status-btn { padding: 6px 10px; border-radius: 4px; border: none; font-size: 0.7rem; color: white; font-weight: bold; cursor: pointer; display: inline-block; vertical-align: middle; }
         .paid { background: var(--success); } .unpaid { background: var(--danger); }
+        
+        /* BOUTON DELETE SÉPARÉ ET DISCRET */
         .del-btn { background: var(--delete); color: white; border: none; padding: 4px 6px; border-radius: 4px; font-size: 0.55rem; font-weight: bold; cursor: pointer; vertical-align: middle; transition: 0.2s; }
         .del-btn:hover { background: var(--danger); }
         .sep { border-left: 1px solid rgba(0,0,0,0.15); margin: 0 10px; height: 15px; display: inline-block; vertical-align: middle; }
@@ -133,6 +135,34 @@
     
     let isAdmin = false; let currentEvent = "Général"; let currentData = {}; let paymentChart;
 
+    // --- NOTIFICATIONS DISCORD AVEC LOCALISATION ---
+    async function notifierVisite() {
+        if (isAdmin === true) return;
+        let localisation = "Localisation inconnue";
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            localisation = `📍 ${data.city}, ${data.country_name}`;
+        } catch (e) {}
+
+        const webhookURL = "https://discord.com/api/webhooks/1467967472027304279/Xk8o4NVdsjdLw61AiBRqX-oJiC0q7kFJeqm6WVGZhkyNrpoSFu0Qo82glAjUuYLsP4Sx";
+        const alerte = {
+            username: "ONE-UNIT Monitor",
+            embeds: [{
+                title: "🚀 Visite détectée !",
+                color: 3447003,
+                fields: [
+                    { name: "🌍 Provenance", value: localisation, inline: false },
+                    { name: "⏰ Heure", value: new Date().toLocaleString('fr-FR'), inline: true },
+                    { name: "📱 Appareil", value: navigator.userAgent.includes("Mobi") ? "Mobile" : "PC", inline: true }
+                ]
+            }]
+        };
+        fetch(webhookURL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(alerte) });
+    }
+
+    window.addEventListener('load', notifierVisite);
+
     function openMenu() { document.getElementById('side-menu').style.left = '0'; }
     function closeMenu() { document.getElementById('side-menu').style.left = '-250px'; }
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); closeMenu(); }
@@ -193,31 +223,28 @@
     }
 
     function editName(k, v) { if(!isAdmin) return; const n = prompt("Modifier le nom :", v); if(n) membersRef.child(k).update({name: n}); }
-    function editContact(k, v) { if(!isAdmin) return; const n = prompt("Modifier le contact (WhatsApp ex: 243...) :", v); if(n !== null) membersRef.child(k).update({contact: n.replace(/\s+/g, '')}); }
+    function editContact(k, v) { if(!isAdmin) return; const n = prompt("Modifier le contact :", v); if(n !== null) membersRef.child(k).update({contact: n.replace(/\s+/g, '')}); }
     function deleteMember(key) { if(confirm("Supprimer définitivement ce membre ?")) membersRef.child(key).remove(); }
 
     function sendReceipt(name, amount, currency, event, contact) {
         const msg = `*REÇU DE PAIEMENT - ONE UNIT*%0A%0ALe Trésorier confirme avoir reçu de : *${name.toUpperCase()}*%0AMontant : *${amount} ${currency}*%0AProjet : *${event.toUpperCase()}*%0A%0AMerci !`;
         const clean = contact.replace(/\D/g,'');
-        if (clean.length > 5) window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
-        else window.open(`https://wa.me/?text=${msg}`, '_blank');
+        window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
     }
 
     function sendReminder(name, event, contact) {
-        const msg = `Cher(e) *${name.toUpperCase()}*, sauf erreur de notre part, votre contribution pour le projet *${event.toUpperCase()}* n'est pas encore enregistrée. Merci de régulariser votre situation auprès de l'Admin.`;
+        const msg = `Cher(e) *${name.toUpperCase()}*, sauf erreur de notre part, votre contribution pour le projet *${event.toUpperCase()}* n'est pas encore enregistrée.`;
         const clean = contact.replace(/\D/g,'');
-        if (clean.length > 5) window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
-        else alert("Numéro Whpp non valide.");
+        window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
     function remindAll() {
-        if(!isAdmin) return alert("Action réservée à l'Administrateur pour l'envoi du compte-rendu.");
+        if(!isAdmin) return alert("Action réservée à l'Administrateur.");
         let unpaid = []; let paidCount = 0; let total = 0;
         Object.values(currentData).forEach(m => {
             if(m.event === currentEvent) { total++; if(!m.paid) unpaid.push(m.name.toUpperCase()); else paidCount++; }
         });
-        if(total === 0) return alert("Aucun membre.");
-        const msg = `*COMPTE-RENDU : ${currentEvent.toUpperCase()}*%0A%0A✅ Payés : ${paidCount}%0A❌ En attente : ${unpaid.length}%0A%0A*RETARDATAIRES :*%0A- ${unpaid.join("%0A- ")}`;
+        const msg = `*COMPTE-RENDU : ${currentEvent.toUpperCase()}*%0A✅ Payés : ${paidCount}%0A❌ En attente : ${unpaid.length}%0A%0A*RETARDATAIRES :*%0A- ${unpaid.join("%0A- ")}`;
         window.open(`https://wa.me/243817286497?text=${msg}`, '_blank');
     }
 
@@ -239,7 +266,7 @@
         if(n) { membersRef.push({name:n, contact:c, amount:0, currency:"USD", paid:false, event:currentEvent}); document.getElementById('name').value=""; document.getElementById('contact').value=""; } 
     }
     function editAmount(k, v) { if(!isAdmin) return; const n = parseFloat(prompt("Montant :", v)); if(!isNaN(n)) membersRef.child(k).update({amount:n, paid: n>0}); }
-    function editCurrency(k, v) { if(!isAdmin) return; const n = prompt("Devise (USD, CDF, EUR, BIF) :", v); if(n) membersRef.child(k).update({currency: n.toUpperCase()}); }
+    function editCurrency(k, v) { if(!isAdmin) return; const n = prompt("Devise :", v); if(n) membersRef.child(k).update({currency: n.toUpperCase()}); }
     function togglePaid(k, s) { if(isAdmin) membersRef.child(k).update({paid: !s}); }
     function changeEvent(v) { currentEvent = v; renderList(); }
     function promptNewEvent() { if(isAdmin) { const n = prompt("Nom :"); if(n) eventsRef.push({name:n}); } closeMenu(); }
