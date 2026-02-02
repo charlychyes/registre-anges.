@@ -22,20 +22,24 @@
         .stat-card { background: var(--card); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid rgba(0,0,0,0.05); }
         .stat-card b { display: block; font-size: 0.85rem; color: var(--primary); }
 
-        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         th { background: rgba(0,0,0,0.05); padding: 10px; font-size: 0.65rem; text-transform: uppercase; }
         td { padding: 12px 5px; border-bottom: 1px solid rgba(0,0,0,0.05); text-align: center; font-size: 0.8rem; }
         
-        .status-btn { padding: 5px 8px; border-radius: 4px; border: none; font-size: 0.65rem; color: white; font-weight: bold; cursor: pointer; }
+        .status-btn { padding: 6px 10px; border-radius: 4px; border: none; font-size: 0.7rem; color: white; font-weight: bold; cursor: pointer; display: inline-block; vertical-align: middle; }
         .paid { background: var(--success); } .unpaid { background: var(--danger); }
         
+        /* Style spécifique pour le bouton DELETE pour éviter les erreurs de clic */
+        .del-btn { background: var(--danger); color: white; border: none; padding: 4px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; cursor: pointer; margin-left: 12px; vertical-align: middle; opacity: 0.8; }
+        .del-btn:active { opacity: 1; }
+
         .whatsapp-float { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; border-radius: 50px; padding: 12px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; text-decoration: none; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
         
         #side-menu { position: fixed; left: -250px; top: 0; width: 250px; height: 100%; background: var(--primary); color: white; transition: 0.3s; z-index: 2000; padding-top: 50px; }
         #side-menu div { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.75rem; text-transform: uppercase; }
         
         .main-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; color: white; text-transform: uppercase; font-size: 0.8rem; }
-        input { width: 95%; padding: 10px; margin-bottom: 8px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit; box-sizing: border-box; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -54,10 +58,10 @@
     <select id="event-dropdown" onchange="changeEvent(this.value)" style="background:none; color:white; border:1px solid var(--accent); padding:3px; border-radius:4px; font-size:0.7rem;"></select>
 </div>
 
-<a id="wa-contact-btn" href="https://wa.me/262639652738" class="whatsapp-float" target="_blank">Contact Admin</a>
+<a id="wa-contact-btn" href="#" class="whatsapp-float" target="_blank">Contact Admin</a>
 
 <div class="page">
-    <button onclick="remindAll()" class="main-btn" style="background:var(--warning)">Relance Globale (Herodote M)</button>
+    <button onclick="remindAll()" class="main-btn" style="background:var(--warning)">Compte-rendu Admin (Herodote M)</button>
     
     <div class="chart-container">
         <canvas id="paymentChart"></canvas>
@@ -130,28 +134,56 @@
             if(m.event !== currentEvent) return;
             if(m.paid) { totals[m.currency] += m.amount; pCount++; } else { uCount++; }
 
-            let recuBtn = m.paid ? `<button onclick="sendReceipt('${m.name}', ${m.amount}, '${m.currency}', '${m.event}', '${m.contact||''}')" style="background:none; border:1px solid var(--success); color:var(--success); padding:3px 6px; border-radius:4px; font-size:0.6rem; margin-left:5px; cursor:pointer;">REÇU</button>` : "";
-            let deleteBtn = isAdmin ? `<button onclick="deleteMember('${key}')" style="background:var(--danger); color:white; border:none; padding:5px 8px; border-radius:4px; font-size:0.6rem; margin-left:5px; cursor:pointer; font-weight:bold;">DELETE</button>` : "";
+            let recuBtn = m.paid ? `<button onclick="sendReceipt('${m.name}', ${m.amount}, '${m.currency}', '${m.event}', '${m.contact||''}')" style="background:none; border:1px solid var(--success); color:var(--success); padding:3px 6px; border-radius:4px; font-size:0.6rem; margin-right:8px; cursor:pointer; vertical-align:middle;">REÇU</button>` : "";
+            
+            let rappelBtn = (isAdmin && !m.paid && m.contact) ? `<button onclick="sendReminder('${m.name}', '${m.event}', '${m.contact}')" style="background:none; border:1px solid var(--warning); color:var(--warning); padding:3px 6px; border-radius:4px; font-size:0.6rem; margin-right:8px; cursor:pointer; vertical-align:middle;">RAPPEL</button>` : "";
+            
+            let deleteBtn = isAdmin ? `<button onclick="deleteMember('${key}')" class="del-btn">DELETE</button>` : "";
 
             list.innerHTML += `<tr>
-                <td style="text-align:left"><b>${m.name.toUpperCase()}</b></td>
+                <td style="text-align:left">
+                    <b ${editStyle} onclick="editName('${key}', '${m.name}')">${m.name.toUpperCase()}</b><br>
+                    ${isAdmin ? `<small onclick="editContact('${key}', '${m.contact||''}')" style="color:gray; font-size:0.6rem; cursor:pointer;">${m.contact || 'Ajouter contact'}</small>` : ''}
+                </td>
                 <td><span ${editStyle} onclick="editAmount('${key}', ${m.amount})">${m.amount}</span> <span ${editStyle} onclick="editCurrency('${key}', '${m.currency}')">${m.currency}</span></td>
-                <td><button onclick="togglePaid('${key}', ${m.paid})" class="status-btn ${m.paid ? 'paid' : 'unpaid'}">${m.paid ? 'PAYÉ' : 'À PAYER'}</button>${recuBtn}${deleteBtn}</td>
+                <td>
+                    ${recuBtn}${rappelBtn}
+                    <button onclick="togglePaid('${key}', ${m.paid})" class="status-btn ${m.paid ? 'paid' : 'unpaid'}">${m.paid ? 'PAYÉ' : 'À PAYER'}</button>
+                    ${deleteBtn}
+                </td>
             </tr>`;
         });
-        for (let c in totals) document.getElementById('t' + c).innerText = totals[c] + " " + c;
+        for (let c in totals) if(document.getElementById('t'+c)) document.getElementById('t' + c).innerText = totals[c] + " " + c;
         updateChart(pCount, uCount);
         updateWhatsAppLink();
     }
 
+    function editName(k, v) { if(!isAdmin) return; const n = prompt("Modifier le nom :", v); if(n) membersRef.child(k).update({name: n}); }
+    function editContact(k, v) { if(!isAdmin) return; const n = prompt("Modifier le contact (WhatsApp ex: 243...) :", v); if(n !== null) membersRef.child(k).update({contact: n.replace(/\s+/g, '')}); }
     function deleteMember(key) { if(confirm("Supprimer définitivement ce membre ?")) membersRef.child(key).remove(); }
 
     function sendReceipt(name, amount, currency, event, contact) {
         const msg = `*REÇU DE PAIEMENT - ONE UNIT*%0A%0ALe Trésorier confirme avoir reçu de : *${name.toUpperCase()}*%0AMontant : *${amount} ${currency}*%0AProjet : *${event.toUpperCase()}*%0A%0AMerci !`;
-        // On nettoie le contact au cas où c'est un numéro
-        const cleanContact = contact.replace(/\D/g,'');
-        if (cleanContact.length > 5) window.open(`https://wa.me/${cleanContact}?text=${msg}`, '_blank');
+        const clean = contact.replace(/\D/g,'');
+        if (clean.length > 5) window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
         else window.open(`https://wa.me/?text=${msg}`, '_blank');
+    }
+
+    function sendReminder(name, event, contact) {
+        const msg = `Cher(e) *${name.toUpperCase()}*, sauf erreur de notre part, votre contribution pour le projet *${event.toUpperCase()}* n'est pas encore enregistrée. Merci de régulariser votre situation auprès de l'Admin.`;
+        const clean = contact.replace(/\D/g,'');
+        if (clean.length > 5) window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
+        else alert("Numéro Whpp non valide.");
+    }
+
+    function remindAll() {
+        let unpaid = []; let paidCount = 0; let total = 0;
+        Object.values(currentData).forEach(m => {
+            if(m.event === currentEvent) { total++; if(!m.paid) unpaid.push(m.name.toUpperCase()); else paidCount++; }
+        });
+        if(total === 0) return alert("Aucun membre.");
+        const msg = `*COMPTE-RENDU : ${currentEvent.toUpperCase()}*%0A%0A✅ Payés : ${paidCount}%0A❌ En attente : ${unpaid.length}%0A%0A*RETARDATAIRES :*%0A- ${unpaid.join("%0A- ")}`;
+        window.open(`https://wa.me/243817286497?text=${msg}`, '_blank');
     }
 
     function updateWhatsAppLink() {
@@ -177,13 +209,7 @@
     function changeEvent(v) { currentEvent = v; renderList(); }
     function promptNewEvent() { if(isAdmin) { const n = prompt("Nom :"); if(n) eventsRef.push({name:n}); } closeMenu(); }
     function backupData() { db.ref().once('value').then(s => { const a = document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(s.val())); a.download="BACKUP.json"; a.click(); }); }
-    function exportToCSV() { let c = "NOM,MONTANT,DEVISE,STATUT\n"; Object.values(currentData).forEach(m => { c += `${m.name},${m.amount},${m.currency},${m.paid?'PAYÉ':'À PAYER'}\n`; }); const a = document.createElement('a'); a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(c); a.download="EXCEL.csv"; a.click(); }
-    function remindAll() {
-        let unpaid = [];
-        Object.values(currentData).forEach(m => { if(!m.paid && m.event === currentEvent) unpaid.push(m.name.toUpperCase()); });
-        if(unpaid.length === 0) return alert("Tout est à jour.");
-        window.open(`https://wa.me/243817286497?text=Salut%20Herodote%20M%2C%20voici%20les%20retardataires%20pour%20${currentEvent}%20%3A%20${unpaid.join(", ")}`, '_blank');
-    }
+    function exportToCSV() { let c = "NOM,MONTANT,DEVISE,STATUT\n"; Object.values(currentData).forEach(m => { c += `${m.name},${m.amount},${m.currency},${m.paid?'PAYE':'A PAYER'}\n`; }); const a = document.createElement('a'); a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(c); a.download="EXCEL.csv"; a.click(); }
 </script>
 </body>
 </html>
