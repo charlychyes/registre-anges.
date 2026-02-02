@@ -7,213 +7,185 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --primary: #0a3d62; --accent: #87CEEB; --success: #27ae60; --danger: #c0392b; --bg: #f4f7f6; --text: #333; --card: white; }
+        :root { --primary: #0a3d62; --accent: #87CEEB; --success: #27ae60; --danger: #c0392b; --warning: #e67e22; --bg: #f4f7f6; --text: #333; --card: white; }
         .dark-mode { --primary: #121212; --accent: #87CEEB; --bg: #1e1e1e; --text: #f4f7f6; --card: #2d2d2d; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
-        #side-menu { position: fixed; left: -250px; top: 0; width: 250px; height: 100%; background: var(--primary); color: white; transition: 0.3s; z-index: 2000; padding-top: 60px; }
-        #side-menu div { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        #login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--primary); display:flex; align-items:center; justify-content:center; z-index:3000; }
-        .login-box { background: white; padding: 30px; border-radius: 15px; width: 85%; max-width: 400px; text-align:center; color: #0a3d62; }
-        .container { max-width: 900px; margin: auto; background: var(--card); min-height: 100vh; }
-        .header { background: var(--primary); color: white; padding: 20px; display: flex; align-items: center; border-bottom: 5px solid var(--accent); }
-        .chart-container { width: 180px; margin: 20px auto; }
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); background: var(--card); }
-        .stat-item { padding: 15px; border: 0.5px solid rgba(0,0,0,0.05); text-align: center; }
-        .stat-item b { display: block; font-size: 1.1rem; color: var(--accent); }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: rgba(0,0,0,0.05); padding: 12px; font-size: 0.75rem; color: var(--text); }
-        td { padding: 12px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); text-align: center; font-size: 0.8rem; }
-        .editable { cursor: pointer; border-bottom: 1px dashed var(--accent); font-weight: bold; }
-        .btn { padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: white; font-size: 0.7rem; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; transition: 0.3s; }
+        
+        .header { background: var(--primary); color: white; padding: 15px; display: flex; align-items: center; border-bottom: 4px solid var(--accent); position: sticky; top:0; z-index: 100; }
+        .page { padding: 10px; max-width: 800px; margin: auto; }
+
+        .chart-container { background: var(--card); padding: 10px; border-radius: 10px; margin-bottom: 15px; text-align: center; border: 1px solid rgba(0,0,0,0.05); }
+        #paymentChart { max-width: 140px; margin: auto; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: var(--card); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid rgba(0,0,0,0.05); }
+        .stat-card b { display: block; font-size: 0.85rem; color: var(--primary); }
+
+        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
+        th { background: rgba(0,0,0,0.05); padding: 10px; font-size: 0.65rem; text-transform: uppercase; }
+        td { padding: 12px 5px; border-bottom: 1px solid rgba(0,0,0,0.05); text-align: center; font-size: 0.8rem; }
+        
+        .status-btn { padding: 5px 8px; border-radius: 4px; border: none; font-size: 0.65rem; color: white; font-weight: bold; cursor: pointer; }
         .paid { background: var(--success); } .unpaid { background: var(--danger); }
-        .pdf-btn { background: var(--accent); color: var(--primary); margin-top: 2px; }
-        .mail-btn { background: #576571; color: white; margin-top: 2px; }
-        .admin-area { display: none; padding: 20px; background: rgba(135, 206, 235, 0.1); border-top: 2px solid var(--accent); }
-        input, select { padding: 12px; margin: 8px 0; width: 90%; border: 1px solid #ccc; border-radius: 8px; background: var(--card); color: var(--text); }
+        
+        .whatsapp-float { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; border-radius: 50px; padding: 12px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; text-decoration: none; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
+        
+        #side-menu { position: fixed; left: -250px; top: 0; width: 250px; height: 100%; background: var(--primary); color: white; transition: 0.3s; z-index: 2000; padding-top: 50px; }
+        #side-menu div { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.75rem; text-transform: uppercase; }
+        
+        .main-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; color: white; text-transform: uppercase; font-size: 0.8rem; }
+        input { width: 95%; padding: 10px; margin-bottom: 8px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <div id="side-menu">
-    <div onclick="toggleDarkMode()">🌓 Mode Sombre / Clair</div>
-    <div onclick="showEmails()">📧 Liste des E-mails (Admin)</div>
-    <div onclick="closeMenu()">✖ Fermer le Menu</div>
+    <div onclick="toggleDarkMode()">Mode Sombre</div>
+    <div onclick="promptNewEvent()">Nouvel Evenement</div>
+    <div onclick="backupData()">Sauvegarde JSON</div>
+    <div onclick="exportToCSV()">Exporter Excel (CSV)</div>
+    <div onclick="closeMenu()">Fermer</div>
 </div>
 
-<div id="login-overlay">
-    <div class="login-box">
-        <h2>ONE UNIT</h2>
-        <p>Entrez votre e-mail pour accéder au registre.</p>
-        <input type="email" id="user-email" placeholder="votre@email.com">
-        <button onclick="saveEmail()" style="background:var(--primary); color:white; border:none; padding:15px; width:100%; border-radius:8px; margin-top:10px; font-weight:bold;">ACCÉDER</button>
-    </div>
+<div class="header">
+    <span onclick="openMenu()" style="font-size:24px; margin-right:15px; cursor:pointer;">☰</span>
+    <div style="flex-grow:1; font-weight: bold;">ONE UNIT</div>
+    <select id="event-dropdown" onchange="changeEvent(this.value)" style="background:none; color:white; border:1px solid var(--accent); padding:3px; border-radius:4px; font-size:0.7rem;"></select>
 </div>
 
-<div class="container">
-    <div class="header">
-        <span onclick="openMenu()" style="font-size:25px; cursor:pointer; margin-right:15px; color:var(--accent);">☰</span>
-        <div style="flex-grow:1">
-            <h1 style="margin:0; font-size: 1.4rem;">ONE UNIT</h1>
-            <small id="live-clock" style="color:var(--accent);"></small>
-        </div>
-        <button onclick="askAccess()" id="lock-btn" style="background:none; border:1px solid var(--accent); color:var(--accent); padding:6px; border-radius:5px; font-size: 0.7rem;">ADMIN</button>
-    </div>
+<a id="wa-contact-btn" href="https://wa.me/262639652738" class="whatsapp-float" target="_blank">Contact Admin</a>
 
-    <div class="chart-container"><canvas id="myChart"></canvas></div>
+<div class="page">
+    <button onclick="remindAll()" class="main-btn" style="background:var(--warning)">Relance Globale (Herodote M)</button>
+    
+    <div class="chart-container">
+        <canvas id="paymentChart"></canvas>
+        <p id="chart-legend" style="font-size: 0.7rem; margin-top: 5px; font-weight: bold;"></p>
+    </div>
 
     <div class="stats-grid">
-        <div class="stat-item">USD<br><b id="tUSD">0</b></div>
-        <div class="stat-item">CDF<br><b id="tCDF">0</b></div>
-        <div class="stat-item">EUR<br><b id="tEUR">0</b></div>
-        <div class="stat-item">BIF<br><b id="tBIF">0</b></div>
+        <div class="stat-card"><small>USD</small><b id="tUSD">0</b></div>
+        <div class="stat-card"><small>CDF</small><b id="tCDF">0</b></div>
+        <div class="stat-card"><small>EUR</small><b id="tEUR">0</b></div>
+        <div class="stat-card"><small>BIF</small><b id="tBIF">0</b></div>
     </div>
 
     <table>
-        <thead><tr><th>MEMBRE / DATE</th><th>MONTANT</th><th>ACTIONS</th></tr></thead>
+        <thead><tr><th>Membre</th><th>Montant</th><th>Statut</th></tr></thead>
         <tbody id="list"></tbody>
     </table>
 
-    <div id="admin" class="admin-area">
-        <h3>AJOUTER MEMBRE</h3>
-        <input type="text" id="name" placeholder="Nom complet">
-        <p style="font-size:0.7rem; color:gray;">(Optionnel lors de l'inscription initiale :)</p>
-        <input type="number" id="amt" placeholder="Montant">
-        <select id="cur"><option value="USD">USD</option><option value="CDF">CDF</option><option value="EUR">EUR</option><option value="BIF">BIF</option></select>
-        <button onclick="add()" style="background:var(--primary); color:white; padding:15px; width:100%; border:none; border-radius:8px; font-weight:bold;">ENREGISTRER</button>
+    <div id="admin-panel" style="display:none; margin-top:20px; padding:15px; background:rgba(0,0,0,0.05); border-radius:10px;">
+        <h4 style="margin-top:0; color:var(--primary);">Admin Panel</h4>
+        <input type="text" id="name" placeholder="Nom du membre">
+        <input type="text" id="contact" placeholder="Numéro Whpp/Email">
+        <button onclick="addMember()" class="main-btn" style="background:var(--primary); border:1px solid var(--accent)">Ajouter au projet</button>
     </div>
+    <button onclick="askAccess()" id="lock-btn" class="main-btn" style="background:var(--primary); border:1px solid var(--accent); margin-top:10px;">Acces Admin</button>
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyB78cC9gnYCgPjd9ikZjboHqWq86-j-7YI",
-        authDomain: "oneunit-dfa62.firebaseapp.com",
-        databaseURL: "https://oneunit-dfa62-default-rtdb.firebaseio.com",
-        projectId: "oneunit-dfa62",
-        storageBucket: "oneunit-dfa62.firebasestorage.app",
-        messagingSenderId: "837193571803", appId: "1:837193571803:web:b921421a5765c363943340"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyB78cC9gnYCgPjd9ikZjboHqWq86-j-7YI", authDomain: "oneunit-dfa62.firebaseapp.com", databaseURL: "https://oneunit-dfa62-default-rtdb.firebaseio.com", projectId: "oneunit-dfa62", storageBucket: "oneunit-dfa62.firebasestorage.app", messagingSenderId: "837193571803", appId: "1:837193571803:web:b921421a5765c363943340" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const membersRef = db.ref('members');
-    const logsRef = db.ref('logs');
-    let isAdmin = false; let myChart;
-
-    if(localStorage.getItem('oneUnitEmail')) document.getElementById('login-overlay').style.display = 'none';
+    const eventsRef = db.ref('events');
+    
+    let isAdmin = false; let currentEvent = "Général"; let currentData = {}; let paymentChart;
 
     function openMenu() { document.getElementById('side-menu').style.left = '0'; }
     function closeMenu() { document.getElementById('side-menu').style.left = '-250px'; }
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); closeMenu(); }
 
-    function saveEmail() {
-        const email = document.getElementById('user-email').value;
-        if(email.includes('@')) {
-            localStorage.setItem('oneUnitEmail', email);
-            logsRef.push({ email: email, date: new Date().toLocaleString() });
-            document.getElementById('login-overlay').style.display = 'none';
-        }
-    }
-
     function askAccess() {
         if(prompt("Code Admin :") === "05102005") {
             isAdmin = true;
-            document.getElementById('admin').style.display = 'block';
-            document.getElementById('lock-btn').innerText = "ADMIN ON";
+            document.getElementById('admin-panel').style.display = 'block';
+            document.getElementById('lock-btn').style.display = 'none';
             renderList();
         }
     }
 
-    function add() {
-        const n = document.getElementById('name').value;
-        const a = parseFloat(document.getElementById('amt').value) || 0;
-        if(n) {
-            membersRef.push({ 
-                name: n, 
-                amount: a, 
-                currency: document.getElementById('cur').value, 
-                paid: a > 0 ? true : false, 
-                date: new Date().toLocaleString('fr-FR', {dateStyle:'short', timeStyle:'short'}) 
-            });
-            document.getElementById('name').value = ""; document.getElementById('amt').value = "";
-        }
+    function updateChart(paid, unpaid) {
+        const ctx = document.getElementById('paymentChart').getContext('2d');
+        if (paymentChart) paymentChart.destroy();
+        paymentChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: ['Payé', 'À Payer'], datasets: [{ data: [paid, unpaid], backgroundColor: ['#27ae60', '#c0392b'], borderWidth: 0 }] },
+            options: { cutout: '80%', plugins: { legend: { display: false } } }
+        });
+        document.getElementById('chart-legend').innerText = paid + " PAYÉS / " + unpaid + " EN ATTENTE";
     }
-
-    // FONCTION POUR MODIFIER MONTANT/DEVISE
-    function editMember(key, field, currentVal) {
-        if(!isAdmin) return;
-        let newVal;
-        if(field === 'currency') {
-            newVal = prompt("Nouvelle devise (USD, CDF, EUR, BIF) :", currentVal).toUpperCase();
-            if(!['USD','CDF','EUR','BIF'].includes(newVal)) return;
-        } else {
-            newVal = parseFloat(prompt("Nouveau montant :", currentVal));
-            if(isNaN(newVal)) return;
-        }
-        membersRef.child(key).update({ [field]: newVal });
-    }
-
-    function removeMember(key) { if(confirm("Supprimer ?")) membersRef.child(key).remove(); }
-    function toggle(key, status) { if(isAdmin) membersRef.child(key).update({ paid: !status }); }
-
-    function generatePDF(name, amount, curr, date) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setDrawColor(135, 206, 235); doc.setLineWidth(2); doc.rect(10, 10, 190, 80);
-        doc.setFontSize(22); doc.setTextColor(10, 61, 98); doc.text("ONE UNIT", 105, 30, { align: "center" });
-        doc.setFontSize(12); doc.setTextColor(0,0,0);
-        doc.text(`Membre : ${name.toUpperCase()}`, 20, 50);
-        doc.text(`Montant : ${amount} ${curr}`, 20, 60);
-        doc.text(`Date : ${date || '---'}`, 20, 70);
-        doc.save(`Recu_${name}.pdf`);
-    }
-
-    function sendEmail(name, amount, curr, date) {
-        const email = prompt("Adresse e-mail du membre :");
-        if(email) {
-            const sub = encodeURIComponent(`Facture ONE UNIT - ${name}`);
-            const body = encodeURIComponent(`Bonjour ${name},\n\nVotre paiement de ${amount} ${curr} a été validé le ${date}.\n\nMerci,\nL'Administration ONE UNIT.`);
-            window.location.href = `mailto:${email}?subject=${sub}&body=${body}`;
-        }
-    }
-
-    let currentData = {};
-    membersRef.on('value', (snap) => { currentData = snap.val() || {}; renderList(); });
 
     function renderList() {
         const list = document.getElementById('list');
         list.innerHTML = "";
-        let t = {USD:0, CDF:0, EUR:0, BIF:0}, pCount=0, uCount=0;
+        let totals = { USD: 0, CDF: 0, EUR: 0, BIF: 0 };
+        let pCount = 0, uCount = 0;
+        const editStyle = isAdmin ? 'style="border-bottom: 1px dashed var(--accent); cursor:pointer;"' : '';
+
         Object.keys(currentData).forEach(key => {
             const m = currentData[key];
-            if(m.paid) { t[m.currency] += m.amount; pCount++; } else { uCount++; }
+            if(m.event !== currentEvent) return;
+            if(m.paid) { totals[m.currency] += m.amount; pCount++; } else { uCount++; }
+
+            let recuBtn = m.paid ? `<button onclick="sendReceipt('${m.name}', ${m.amount}, '${m.currency}', '${m.event}', '${m.contact||''}')" style="background:none; border:1px solid var(--success); color:var(--success); padding:3px 6px; border-radius:4px; font-size:0.6rem; margin-left:5px; cursor:pointer;">REÇU</button>` : "";
+            let deleteBtn = isAdmin ? `<button onclick="deleteMember('${key}')" style="background:var(--danger); color:white; border:none; padding:5px 8px; border-radius:4px; font-size:0.6rem; margin-left:5px; cursor:pointer; font-weight:bold;">DELETE</button>` : "";
+
             list.innerHTML += `<tr>
-                <td style="text-align:left">
-                    ${isAdmin ? `<button onclick="removeMember('${key}')" style="color:red; border:none; background:none; font-size:0.6rem; cursor:pointer;">DELETE</button>` : ''}
-                    <b>${m.name.toUpperCase()}</b><br><small>${m.date || '---'}</small>
-                </td>
-                <td>
-                    <span class="${isAdmin ? 'editable' : ''}" onclick="editMember('${key}', 'amount', ${m.amount})">${m.amount}</span> 
-                    <span class="${isAdmin ? 'editable' : ''}" onclick="editMember('${key}', 'currency', '${m.currency}')">${m.currency}</span>
-                </td>
-                <td>
-                    <button onclick="toggle('${key}', ${m.paid})" class="btn ${m.paid ? 'paid':'unpaid'}">${m.paid ? 'PAYÉ':'À PAYER'}</button>
-                    ${m.paid ? `<br><button onclick="generatePDF('${m.name}', ${m.amount}, '${m.currency}', '${m.date}')" class="btn pdf-btn">PDF</button>
-                    <button onclick="sendEmail('${m.name}', ${m.amount}, '${m.currency}', '${m.date}')" class="btn mail-btn">MAIL</button>` : ''}
-                </td>
+                <td style="text-align:left"><b>${m.name.toUpperCase()}</b></td>
+                <td><span ${editStyle} onclick="editAmount('${key}', ${m.amount})">${m.amount}</span> <span ${editStyle} onclick="editCurrency('${key}', '${m.currency}')">${m.currency}</span></td>
+                <td><button onclick="togglePaid('${key}', ${m.paid})" class="status-btn ${m.paid ? 'paid' : 'unpaid'}">${m.paid ? 'PAYÉ' : 'À PAYER'}</button>${recuBtn}${deleteBtn}</td>
             </tr>`;
         });
-        ['USD','CDF','EUR','BIF'].forEach(c => document.getElementById('t'+c).innerText = t[c]);
+        for (let c in totals) document.getElementById('t' + c).innerText = totals[c] + " " + c;
         updateChart(pCount, uCount);
+        updateWhatsAppLink();
     }
 
-    function updateChart(p, u) {
-        const ctx = document.getElementById('myChart').getContext('2d');
-        if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Payés', 'À Payer'], datasets: [{ data: [p, u], backgroundColor: ['#27ae60', '#c0392b'], borderWidth:0 }] }, options: { plugins: { legend: { display: false } }, cutout: '80%' } });
+    function deleteMember(key) { if(confirm("Supprimer définitivement ce membre ?")) membersRef.child(key).remove(); }
+
+    function sendReceipt(name, amount, currency, event, contact) {
+        const msg = `*REÇU DE PAIEMENT - ONE UNIT*%0A%0ALe Trésorier confirme avoir reçu de : *${name.toUpperCase()}*%0AMontant : *${amount} ${currency}*%0AProjet : *${event.toUpperCase()}*%0A%0AMerci !`;
+        // On nettoie le contact au cas où c'est un numéro
+        const cleanContact = contact.replace(/\D/g,'');
+        if (cleanContact.length > 5) window.open(`https://wa.me/${cleanContact}?text=${msg}`, '_blank');
+        else window.open(`https://wa.me/?text=${msg}`, '_blank');
     }
-    function updateClock() { document.getElementById('live-clock').innerText = new Date().toLocaleString('fr-FR'); }
-    setInterval(updateClock, 1000);
+
+    function updateWhatsAppLink() {
+        const msg = `Bonjour Admin, je souhaite régulariser ma situation pour le projet : ${currentEvent}`;
+        document.getElementById('wa-contact-btn').href = `https://wa.me/262639652738?text=${encodeURIComponent(msg)}`;
+    }
+
+    membersRef.on('value', snap => { currentData = snap.val() || {}; renderList(); });
+    eventsRef.on('value', snap => {
+        const drop = document.getElementById('event-dropdown');
+        drop.innerHTML = '<option value="Général">GENERAL</option>';
+        if(snap.val()) Object.values(snap.val()).forEach(ev => drop.innerHTML += `<option value="${ev.name}">${ev.name.toUpperCase()}</option>`);
+    });
+
+    function addMember() { 
+        const n = document.getElementById('name').value; 
+        const c = document.getElementById('contact').value;
+        if(n) { membersRef.push({name:n, contact:c, amount:0, currency:"USD", paid:false, event:currentEvent}); document.getElementById('name').value=""; document.getElementById('contact').value=""; } 
+    }
+    function editAmount(k, v) { if(!isAdmin) return; const n = parseFloat(prompt("Montant :", v)); if(!isNaN(n)) membersRef.child(k).update({amount:n, paid: n>0}); }
+    function editCurrency(k, v) { if(!isAdmin) return; const n = prompt("Devise (USD, CDF, EUR, BIF) :", v); if(n) membersRef.child(k).update({currency: n.toUpperCase()}); }
+    function togglePaid(k, s) { if(isAdmin) membersRef.child(k).update({paid: !s}); }
+    function changeEvent(v) { currentEvent = v; renderList(); }
+    function promptNewEvent() { if(isAdmin) { const n = prompt("Nom :"); if(n) eventsRef.push({name:n}); } closeMenu(); }
+    function backupData() { db.ref().once('value').then(s => { const a = document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(s.val())); a.download="BACKUP.json"; a.click(); }); }
+    function exportToCSV() { let c = "NOM,MONTANT,DEVISE,STATUT\n"; Object.values(currentData).forEach(m => { c += `${m.name},${m.amount},${m.currency},${m.paid?'PAYÉ':'À PAYER'}\n`; }); const a = document.createElement('a'); a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(c); a.download="EXCEL.csv"; a.click(); }
+    function remindAll() {
+        let unpaid = [];
+        Object.values(currentData).forEach(m => { if(!m.paid && m.event === currentEvent) unpaid.push(m.name.toUpperCase()); });
+        if(unpaid.length === 0) return alert("Tout est à jour.");
+        window.open(`https://wa.me/243817286497?text=Salut%20Herodote%20M%2C%20voici%20les%20retardataires%20pour%20${currentEvent}%20%3A%20${unpaid.join(", ")}`, '_blank');
+    }
 </script>
 </body>
 </html>
+
+        
