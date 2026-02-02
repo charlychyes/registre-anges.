@@ -8,38 +8,73 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #0a3d62; --accent: #87CEEB; --success: #27ae60; --danger: #c0392b; --warning: #e67e22; --bg: #f4f7f6; --text: #333; --card: white; }
-        .dark-mode { --primary: #121212; --accent: #87CEEB; --bg: #1e1e1e; --text: #f4f7f6; --card: #2d2d2d; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; transition: 0.3s; }
+        :root { 
+            --primary: #0a3d62; --accent: #87CEEB; --success: #27ae60; --danger: #c0392b; --warning: #e67e22; 
+            --bg: #f4f7f6; --text: #333; 
+            --card: rgba(255, 255, 255, 0.6); /* Transparence augmentée */
+            --delete: #7f8c8d; 
+        }
+        .dark-mode { 
+            --primary: #121212; --accent: #87CEEB; --bg: #1e1e1e; --text: #f4f7f6; 
+            --card: rgba(45, 45, 45, 0.5); 
+        }
         
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; transition: 0.3s; overflow-x: hidden; }
+
+        /* FILIGRANE GÉANT EN ARRIÈRE-PLAN */
+        body::before {
+            content: "ONE-UNIT";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 20vw;
+            font-weight: 900;
+            color: rgba(10, 61, 98, 0.15); 
+            z-index: -1;
+            white-space: nowrap;
+            pointer-events: none;
+            letter-spacing: 15px;
+        }
+
         .header { background: var(--primary); color: white; padding: 15px; display: flex; align-items: center; border-bottom: 4px solid var(--accent); position: sticky; top:0; z-index: 100; }
-        .page { padding: 10px; max-width: 800px; margin: auto; }
+        .page { padding: 10px; max-width: 800px; margin: auto; position: relative; z-index: 1; }
 
-        .chart-container { background: var(--card); padding: 10px; border-radius: 10px; margin-bottom: 15px; text-align: center; border: 1px solid rgba(0,0,0,0.05); }
+        /* EFFET GLASSMORPHISM POUSSÉ */
+        .chart-container, .stat-card, table, #admin-panel { 
+            background: var(--card) !important; 
+            backdrop-filter: blur(10px); /* Flou plus fort pour la lisibilité */
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 12px; 
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
         #paymentChart { max-width: 140px; margin: auto; }
-
         .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        .stat-card { background: var(--card); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid rgba(0,0,0,0.05); }
-        .stat-card b { display: block; font-size: 0.85rem; color: var(--primary); }
+        .stat-card { padding: 10px; text-align: center; }
+        .stat-card b { display: block; font-size: 0.9rem; color: var(--primary); }
 
-        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        th { background: rgba(0,0,0,0.05); padding: 10px; font-size: 0.65rem; text-transform: uppercase; }
-        td { padding: 12px 5px; border-bottom: 1px solid rgba(0,0,0,0.05); text-align: center; font-size: 0.8rem; }
+        table { width: 100%; border-collapse: collapse; overflow: hidden; }
+        th { background: rgba(0,0,0,0.08); padding: 12px; font-size: 0.7rem; text-transform: uppercase; }
+        td { padding: 14px 5px; border-bottom: 1px solid rgba(0,0,0,0.05); text-align: center; font-size: 0.85rem; }
         
         .status-btn { padding: 6px 10px; border-radius: 4px; border: none; font-size: 0.7rem; color: white; font-weight: bold; cursor: pointer; display: inline-block; vertical-align: middle; }
         .paid { background: var(--success); } .unpaid { background: var(--danger); }
-        
-        /* Style spécifique pour le bouton DELETE pour éviter les erreurs de clic */
-        .del-btn { background: var(--danger); color: white; border: none; padding: 4px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; cursor: pointer; margin-left: 12px; vertical-align: middle; opacity: 0.8; }
-        .del-btn:active { opacity: 1; }
+        .del-btn { background: var(--delete); color: white; border: none; padding: 4px 6px; border-radius: 4px; font-size: 0.55rem; font-weight: bold; cursor: pointer; vertical-align: middle; transition: 0.2s; }
+        .del-btn:hover { background: var(--danger); }
+        .sep { border-left: 1px solid rgba(0,0,0,0.15); margin: 0 10px; height: 15px; display: inline-block; vertical-align: middle; }
 
         .whatsapp-float { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; border-radius: 50px; padding: 12px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; text-decoration: none; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
         
         #side-menu { position: fixed; left: -250px; top: 0; width: 250px; height: 100%; background: var(--primary); color: white; transition: 0.3s; z-index: 2000; padding-top: 50px; }
         #side-menu div { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.75rem; text-transform: uppercase; }
         
-        .main-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; color: white; text-transform: uppercase; font-size: 0.8rem; }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        .main-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; color: white; text-transform: uppercase; font-size: 0.8rem; transition: 0.3s; }
+        .disabled-btn { opacity: 0.5; cursor: not-allowed !important; filter: grayscale(1); }
+        
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; background: rgba(255,255,255,0.7); }
     </style>
 </head>
 <body>
@@ -61,7 +96,7 @@
 <a id="wa-contact-btn" href="#" class="whatsapp-float" target="_blank">Contact Admin</a>
 
 <div class="page">
-    <button onclick="remindAll()" class="main-btn" style="background:var(--warning)">Compte-rendu Admin (Herodote M)</button>
+    <button id="global-remind-btn" onclick="remindAll()" class="main-btn disabled-btn" style="background:var(--warning)">Compte-rendu Admin (Herodote M)</button>
     
     <div class="chart-container">
         <canvas id="paymentChart"></canvas>
@@ -80,7 +115,7 @@
         <tbody id="list"></tbody>
     </table>
 
-    <div id="admin-panel" style="display:none; margin-top:20px; padding:15px; background:rgba(0,0,0,0.05); border-radius:10px;">
+    <div id="admin-panel" style="display:none; padding:15px; margin-top:20px;">
         <h4 style="margin-top:0; color:var(--primary);">Admin Panel</h4>
         <input type="text" id="name" placeholder="Nom du membre">
         <input type="text" id="contact" placeholder="Numéro Whpp/Email">
@@ -107,6 +142,7 @@
             isAdmin = true;
             document.getElementById('admin-panel').style.display = 'block';
             document.getElementById('lock-btn').style.display = 'none';
+            document.getElementById('global-remind-btn').classList.remove('disabled-btn');
             renderList();
         }
     }
@@ -135,10 +171,8 @@
             if(m.paid) { totals[m.currency] += m.amount; pCount++; } else { uCount++; }
 
             let recuBtn = m.paid ? `<button onclick="sendReceipt('${m.name}', ${m.amount}, '${m.currency}', '${m.event}', '${m.contact||''}')" style="background:none; border:1px solid var(--success); color:var(--success); padding:3px 6px; border-radius:4px; font-size:0.6rem; margin-right:8px; cursor:pointer; vertical-align:middle;">REÇU</button>` : "";
-            
             let rappelBtn = (isAdmin && !m.paid && m.contact) ? `<button onclick="sendReminder('${m.name}', '${m.event}', '${m.contact}')" style="background:none; border:1px solid var(--warning); color:var(--warning); padding:3px 6px; border-radius:4px; font-size:0.6rem; margin-right:8px; cursor:pointer; vertical-align:middle;">RAPPEL</button>` : "";
-            
-            let deleteBtn = isAdmin ? `<button onclick="deleteMember('${key}')" class="del-btn">DELETE</button>` : "";
+            let deleteBtn = isAdmin ? `<span class="sep"></span><button onclick="deleteMember('${key}')" class="del-btn">DEL</button>` : "";
 
             list.innerHTML += `<tr>
                 <td style="text-align:left">
@@ -177,6 +211,7 @@
     }
 
     function remindAll() {
+        if(!isAdmin) return alert("Action réservée à l'Administrateur pour l'envoi du compte-rendu.");
         let unpaid = []; let paidCount = 0; let total = 0;
         Object.values(currentData).forEach(m => {
             if(m.event === currentEvent) { total++; if(!m.paid) unpaid.push(m.name.toUpperCase()); else paidCount++; }
