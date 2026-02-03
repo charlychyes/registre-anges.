@@ -10,53 +10,52 @@
     <style>
         :root { 
             --primary: #0a3d62; --accent: #87CEEB; --success: #27ae60; --danger: #c0392b; --warning: #e67e22; 
-            --bg: #f4f7f6; --text: #333; 
-            --card: rgba(255, 255, 255, 0.6); 
-            --delete: #7f8c8d; 
+            --bg: #f4f7f6; --text: #333; --card: rgba(255, 255, 255, 0.7); 
         }
-        .dark-mode { --primary: #121212; --accent: #87CEEB; --bg: #1e1e1e; --text: #f4f7f6; --card: rgba(45, 45, 45, 0.5); }
+        .dark-mode { --bg: #1e1e1e; --text: #f4f7f6; --card: rgba(45, 45, 45, 0.8); }
         
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; transition: 0.3s; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; transition: 0.3s; }
 
         /* FILIGRANE */
         body::before {
             content: "ONE-UNIT"; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 20vw; font-weight: 900; color: rgba(10, 61, 98, 0.1); z-index: -1; pointer-events: none;
+            font-size: 20vw; font-weight: 900; color: rgba(10, 61, 98, 0.08); z-index: -1; pointer-events: none;
         }
 
         .header { background: var(--primary); color: white; padding: 15px; display: flex; align-items: center; border-bottom: 4px solid var(--accent); position: sticky; top:0; z-index: 100; }
         .page { padding: 10px; max-width: 800px; margin: auto; position: relative; z-index: 1; }
 
-        .chart-container, .stat-card, table, #admin-panel, #chat-container { 
+        /* MENU LATÉRAL */
+        #side-menu { position: fixed; left: -250px; top: 0; width: 250px; height: 100%; background: var(--primary); color: white; transition: 0.3s; z-index: 2000; padding-top: 50px; }
+        #side-menu div { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; }
+
+        /* CARTES ET TABLEAU */
+        .chart-container, table, #admin-panel { 
             background: var(--card) !important; backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.1); margin-bottom: 15px;
         }
 
-        /* MESSAGERIE STYLE */
-        #chat-container { display: flex; flex-direction: column; height: 350px; overflow: hidden; border: 1px solid var(--primary); }
-        #chat-messages { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        
-        .msg-wrapper { display: flex; gap: 10px; align-items: flex-end; }
-        .msg-wrapper.me { flex-direction: row-reverse; }
-        
-        .avatar { width: 35px; height: 35px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; flex-shrink: 0; text-transform: uppercase; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        
-        .msg { padding: 10px 14px; border-radius: 12px; max-width: 75%; font-size: 0.85rem; line-height: 1.3; position: relative; }
-        .msg-other { background: white; border: 1px solid #ddd; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .msg-me { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .msg b { display: block; font-size: 0.65rem; opacity: 0.7; margin-bottom: 4px; text-transform: uppercase; }
-
-        .chat-input-area { display: flex; padding: 12px; gap: 8px; background: rgba(0,0,0,0.03); }
-        #chat-input { flex-grow: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
-        #send-btn { background: var(--primary); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
-
-        /* RESTE DU STYLE */
-        #paymentChart { max-width: 140px; margin: auto; }
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .stat-card { padding: 10px; text-align: center; }
         table { width: 100%; border-collapse: collapse; }
         td, th { padding: 12px 5px; text-align: center; font-size: 0.85rem; }
         .status-btn { padding: 6px 10px; border-radius: 4px; border: none; font-size: 0.7rem; color: white; font-weight: bold; cursor: pointer; }
         .paid { background: var(--success); } .unpaid { background: var(--danger); }
+        .del-btn { background: #7f8c8d; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.6rem; cursor: pointer; margin-left: 5px; }
+
+        /* CHAT FLOTTANT (POPUP) */
+        #chat-popup { 
+            position: fixed; bottom: 90px; left: 20px; width: 320px; height: 450px; 
+            background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: none; flex-direction: column; z-index: 3000; overflow: hidden; border: 1px solid var(--primary);
+        }
+        #chat-messages { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: #f9f9f9; }
+        .chat-btn { position: fixed; bottom: 20px; left: 20px; width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 3001; }
+        
+        .msg-wrapper { display: flex; gap: 8px; align-items: flex-end; }
+        .msg-wrapper.me { flex-direction: row-reverse; }
+        .avatar { width: 30px; height: 30px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; flex-shrink: 0; }
+        .msg { padding: 8px 12px; border-radius: 10px; max-width: 70%; font-size: 0.8rem; line-height: 1.3; }
+        .msg-me { background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+        .msg-other { background: #eee; border-bottom-left-radius: 2px; }
+
         .main-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; color: white; text-transform: uppercase; }
         input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
         .whatsapp-float { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; border-radius: 50px; padding: 12px 20px; z-index: 1000; text-decoration: none; font-weight: bold; font-size: 0.75rem; }
@@ -64,22 +63,23 @@
 </head>
 <body>
 
+<div id="side-menu">
+    <div onclick="toggleDarkMode()">🌓 Mode Sombre / Clair</div>
+    <div onclick="promptNewEvent()">🆕 Nouvel Événement</div>
+    <div onclick="exportToCSV()">📊 Exporter Excel</div>
+    <div onclick="closeMenu()">✖ Fermer</div>
+</div>
+
 <div class="header">
+    <span onclick="openMenu()" style="font-size:24px; margin-right:15px; cursor:pointer;">☰</span>
     <div style="flex-grow:1; font-weight: bold; letter-spacing: 1px;">ONE UNIT</div>
     <select id="event-dropdown" onchange="changeEvent(this.value)" style="background:none; color:white; border:1px solid var(--accent); padding:5px; border-radius:4px; font-size:0.7rem;"></select>
 </div>
 
-<a id="wa-contact-btn" href="#" class="whatsapp-float" target="_blank">Contact Admin</a>
-
 <div class="page">
-    <div class="chart-container">
-        <canvas id="paymentChart"></canvas>
-        <p id="chart-legend" style="font-size: 0.7rem; text-align:center; font-weight: bold;"></p>
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card"><small>USD</small><b id="tUSD">0</b></div>
-        <div class="stat-card"><small>CDF</small><b id="tCDF">0</b></div>
+    <div class="chart-container" style="padding:15px; text-align:center;">
+        <canvas id="paymentChart" style="max-width:130px; margin:auto;"></canvas>
+        <p id="chart-legend" style="font-size: 0.75rem; font-weight: bold; margin-top:10px;"></p>
     </div>
 
     <table>
@@ -87,24 +87,29 @@
         <tbody id="list"></tbody>
     </table>
 
-    <div id="chat-container">
-        <div style="background: var(--primary); color: white; padding: 10px; font-size: 0.75rem; font-weight: bold; text-align: center;">💬 DISCUSSION LIVE</div>
-        <div id="chat-messages"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Écrire un message...">
-            <button id="send-btn" onclick="sendMessage()">➤</button>
-        </div>
-    </div>
-
     <div id="admin-panel" style="display:none; padding:15px;">
         <input type="text" id="name" placeholder="Nom du membre">
-        <input type="text" id="contact" placeholder="Numéro WhatsApp">
-        <button onclick="addMember()" class="main-btn" style="background:var(--primary)">Ajouter</button>
-        <button onclick="remindAll()" class="main-btn" style="background:var(--warning)">Rapport Global</button>
+        <button onclick="addMember()" class="main-btn" style="background:var(--primary)">Ajouter au projet</button>
+        <button onclick="remindAll()" class="main-btn" style="background:var(--warning)">Rapport WhatsApp</button>
     </div>
     
     <button onclick="askAccess()" id="lock-btn" class="main-btn" style="background:var(--primary); margin-top:10px;">Accès Admin</button>
 </div>
+
+<div class="chat-btn" onclick="toggleChat()">💬</div>
+<div id="chat-popup">
+    <div style="background:var(--primary); color:white; padding:12px; font-weight:bold; display:flex; justify-content:space-between; font-size:0.8rem;">
+        <span>ONE-UNIT CHAT</span>
+        <span onclick="toggleChat()" style="cursor:pointer;">✖</span>
+    </div>
+    <div id="chat-messages"></div>
+    <div style="padding:10px; display:flex; gap:5px; background:white; border-top:1px solid #ddd;">
+        <input type="text" id="chat-input" placeholder="Message..." style="margin:0; padding:8px; border-radius:20px;">
+        <button onclick="sendMessage()" style="background:var(--primary); color:white; border:none; border-radius:50%; width:35px; height:35px;">➤</button>
+    </div>
+</div>
+
+<a id="wa-contact-btn" href="https://wa.me/262639652738" class="whatsapp-float" target="_blank">Contact Admin</a>
 
 <script>
     const firebaseConfig = { apiKey: "AIzaSyB78cC9gnYCgPjd9ikZjboHqWq86-j-7YI", authDomain: "oneunit-dfa62.firebaseapp.com", databaseURL: "https://oneunit-dfa62-default-rtdb.firebaseio.com", projectId: "oneunit-dfa62", storageBucket: "oneunit-dfa62.firebasestorage.app", messagingSenderId: "837193571803", appId: "1:837193571803:web:b921421a5765c363943340" };
@@ -114,67 +119,18 @@
     const eventsRef = db.ref('events');
     const chatRef = db.ref('messages');
     
-    const WEBHOOK_URL = "https://discord.com/api/webhooks/1467967472027304279/Xk8o4NVdsjdLw61AiBRqX-oJiC0q7kFJeqm6WVGZhkyNrpoSFu0Qo82glAjUuYLsP4Sx";
     let isAdmin = false; let currentEvent = "Général"; let currentData = {}; let paymentChart;
 
-    // --- LOGIQUE CHAT ---
-    function stringToColor(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        return `hsl(${Math.abs(hash) % 360}, 65%, 40%)`;
+    // --- NAVIGATION ---
+    function openMenu() { document.getElementById('side-menu').style.left = '0'; }
+    function closeMenu() { document.getElementById('side-menu').style.left = '-250px'; }
+    function toggleDarkMode() { document.body.classList.toggle('dark-mode'); closeMenu(); }
+    function toggleChat() { 
+        const chat = document.getElementById('chat-popup');
+        chat.style.display = (chat.style.display === 'flex') ? 'none' : 'flex';
     }
 
-    async function sendMessage() {
-        const input = document.getElementById('chat-input');
-        const text = input.value.trim();
-        if (!text) return;
-
-        let sender = isAdmin ? "ADMIN (HERODOTE)" : localStorage.getItem('oneunit_user');
-        if (!sender) {
-            sender = prompt("Votre nom pour le chat :");
-            if (!sender) return;
-            localStorage.setItem('oneunit_user', sender);
-        }
-
-        const msgData = { name: sender, text: text, timestamp: Date.now() };
-        chatRef.push(msgData);
-        input.value = "";
-
-        // Notification Discord
-        fetch(WEBHOOK_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                username: "ONE-UNIT Chat",
-                content: `💬 **${sender}** : ${text}`
-            })
-        });
-    }
-
-    chatRef.limitToLast(25).on('value', snap => {
-        const box = document.getElementById('chat-messages');
-        box.innerHTML = "";
-        const me = isAdmin ? "ADMIN (HERODOTE)" : localStorage.getItem('oneunit_user');
-        
-        snap.forEach(child => {
-            const m = child.val();
-            const isMe = m.name === me;
-            const initial = m.name.charAt(0);
-            const color = stringToColor(m.name);
-
-            box.innerHTML += `
-                <div class="msg-wrapper ${isMe ? 'me' : ''}">
-                    <div class="avatar" style="background:${color}">${initial}</div>
-                    <div class="msg ${isMe ? 'msg-me' : 'msg-other'}">
-                        <b>${m.name}</b>
-                        ${m.text}
-                    </div>
-                </div>`;
-        });
-        box.scrollTop = box.scrollHeight;
-    });
-
-    // --- LOGIQUE GESTION ---
+    // --- LOGIQUE ADMIN ---
     function askAccess() {
         if(prompt("Code Admin :") === "05102005") {
             isAdmin = true;
@@ -186,43 +142,69 @@
 
     function renderList() {
         const list = document.getElementById('list'); list.innerHTML = "";
-        let totals = { USD: 0, CDF: 0 }; let pCount = 0, uCount = 0;
-
+        let p = 0, u = 0;
         Object.keys(currentData).forEach(key => {
             const m = currentData[key]; if(m.event !== currentEvent) return;
-            if(m.paid) { totals[m.currency] += m.amount; pCount++; } else { uCount++; }
-
+            m.paid ? p++ : u++;
             list.innerHTML += `<tr>
                 <td style="text-align:left"><b>${m.name.toUpperCase()}</b></td>
                 <td>${m.amount} ${m.currency}</td>
                 <td>
                     <button onclick="togglePaid('${key}', ${m.paid})" class="status-btn ${m.paid ? 'paid' : 'unpaid'}">${m.paid ? 'PAYÉ' : 'À PAYER'}</button>
-                    ${isAdmin ? `<button onclick="deleteMember('${key}')" style="background:none; border:none; color:gray; font-size:0.6rem; cursor:pointer; margin-left:5px;">[X]</button>` : ''}
+                    ${isAdmin ? `<button onclick="deleteMember('${key}')" class="del-btn">DEL</button>` : ''}
                 </td>
             </tr>`;
         });
-        document.getElementById('tUSD').innerText = totals.USD + " USD";
-        document.getElementById('tCDF').innerText = totals.CDF + " CDF";
-        updateChart(pCount, uCount);
+        updateChart(p, u);
     }
 
+    function deleteMember(k) { if(confirm("Supprimer ce membre ?")) membersRef.child(k).remove(); }
     function togglePaid(k, s) { if(isAdmin) membersRef.child(k).update({paid: !s}); }
-    function deleteMember(k) { if(confirm("Supprimer ?")) membersRef.child(k).remove(); }
-    function addMember() {
-        const n = document.getElementById('name').value;
-        const c = document.getElementById('contact').value;
-        if(n) { membersRef.push({name:n, contact:c, amount:0, currency:"USD", paid:false, event:currentEvent}); }
+
+    // --- LOGIQUE CHAT ---
+    function stringToColor(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        return `hsl(${Math.abs(hash) % 360}, 60%, 45%)`;
     }
 
+    function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if(!text) return;
+        let sender = isAdmin ? "ADMIN (HERODOTE)" : localStorage.getItem('oneunit_user') || prompt("Votre nom :");
+        if(!sender) return;
+        localStorage.setItem('oneunit_user', sender);
+        chatRef.push({ name: sender, text: text, timestamp: Date.now() });
+        input.value = "";
+    }
+
+    chatRef.limitToLast(25).on('value', snap => {
+        const box = document.getElementById('chat-messages'); box.innerHTML = "";
+        snap.forEach(child => {
+            const m = child.val();
+            const id = child.key;
+            const isMe = m.name === (isAdmin ? "ADMIN (HERODOTE)" : localStorage.getItem('oneunit_user'));
+            const delMsg = isAdmin ? `<span onclick="deleteMsg('${id}')" style="color:red; cursor:pointer; font-size:0.6rem; margin-left:5px;">[X]</span>` : "";
+            box.innerHTML += `<div class="msg-wrapper ${isMe?'me':''}">
+                <div class="avatar" style="background:${stringToColor(m.name)}">${m.name[0]}</div>
+                <div class="msg ${isMe?'msg-me':'msg-other'}"><b>${m.name} ${delMsg}</b><br>${m.text}</div>
+            </div>`;
+        });
+        box.scrollTop = box.scrollHeight;
+    });
+
+    function deleteMsg(id) { if(isAdmin && confirm("Supprimer message ?")) chatRef.child(id).remove(); }
+
+    // --- GRAPHIQUE ---
     function updateChart(paid, unpaid) {
         const ctx = document.getElementById('paymentChart').getContext('2d');
         if (paymentChart) paymentChart.destroy();
         paymentChart = new Chart(ctx, {
             type: 'doughnut',
-            data: { datasets: [{ data: [paid, unpaid], backgroundColor: ['#27ae60', '#c0392b'] }] },
-            options: { cutout: '80%' }
+            data: { datasets: [{ data: [paid, unpaid], backgroundColor: ['#27ae60', '#c0392b'] }] }
         });
-        document.getElementById('chart-legend').innerText = `${paid} PAYÉS / ${unpaid} À PAYER`;
+        document.getElementById('chart-legend').innerText = `${paid} PAYÉS / ${unpaid} EN ATTENTE`;
     }
 
     membersRef.on('value', snap => { currentData = snap.val() || {}; renderList(); });
@@ -231,10 +213,9 @@
         if(snap.val()) Object.values(snap.val()).forEach(ev => drop.innerHTML += `<option value="${ev.name}">${ev.name}</option>`);
     });
 
+    function addMember() { const n = document.getElementById('name').value; if(n) membersRef.push({name:n, amount:0, currency:"USD", paid:false, event:currentEvent}); }
     function changeEvent(v) { currentEvent = v; renderList(); }
     document.getElementById('chat-input').addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
 </script>
 </body>
 </html>
-
-    
