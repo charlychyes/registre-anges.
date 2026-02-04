@@ -7,245 +7,251 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { 
-            --primary: #0a3d62; --accent: #87CEEB; --success: #27ae60; --danger: #c0392b; --warning: #e67e22; 
-            --bg: #f4f7f6; --text: #333; --card: rgba(255, 255, 255, 0.8); 
-        }
-        .dark-mode { --bg: #1e1e1e; --text: #f4f7f6; --card: rgba(45, 45, 45, 0.9); }
-        
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; transition: 0.3s; }
-
-        /* FILIGRANE */
-        body::before {
-            content: "ONE-UNIT"; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 18vw; font-weight: 900; color: rgba(10, 61, 98, 0.05); z-index: -1; pointer-events: none;
-        }
-
-        .header { background: var(--primary); color: white; padding: 15px; display: flex; align-items: center; border-bottom: 4px solid var(--accent); position: sticky; top:0; z-index: 1000; }
+        :root { --primary: #0a3d62; --accent: #87CEEB; --success: #27ae60; --danger: #c0392b; --warning: #f39c12; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
+        .header { background: var(--primary); color: white; padding: 15px; display: flex; align-items: center; justify-content: space-between; position: sticky; top:0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
         .page { padding: 15px; max-width: 800px; margin: auto; }
-
-        #side-menu { position: fixed; left: -250px; top: 0; width: 250px; height: 100%; background: var(--primary); color: white; transition: 0.3s; z-index: 5000; padding-top: 60px; box-shadow: 5px 0 15px rgba(0,0,0,0.3); }
-        #side-menu div { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; }
-
-        .card-box { background: var(--card); backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.1); margin-bottom: 20px; padding: 15px; }
-
+        .card-box { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; padding: 15px; }
+        
+        /* TABLEAU & RECHERCHE */
         table { width: 100%; border-collapse: collapse; }
-        td, th { padding: 12px 5px; text-align: center; font-size: 0.85rem; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .status-btn { padding: 6px 12px; border-radius: 20px; border: none; font-size: 0.65rem; color: white; font-weight: bold; cursor: pointer; }
+        td, th { padding: 12px 5px; text-align: center; font-size: 0.8rem; border-bottom: 1px solid #eee; }
+        .search-bar { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid var(--primary); margin-bottom: 15px; box-sizing: border-box; font-weight: bold; }
+        .status-btn { padding: 6px 10px; border-radius: 20px; border: none; color: white; font-weight: bold; cursor: pointer; font-size: 0.65rem; }
         .paid { background: var(--success); } .unpaid { background: var(--danger); }
-        .del-btn { background: #7f8c8d; color: white; border: none; padding: 5px 8px; border-radius: 5px; font-size: 0.6rem; cursor: pointer; }
-
-        /* CHAT POPUP */
-        #chat-popup { 
-            position: fixed; bottom: 90px; left: 20px; width: 330px; height: 480px; 
-            background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            display: none; flex-direction: column; z-index: 4000; overflow: hidden; border: 1px solid var(--primary);
-        }
-        #chat-messages { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; background: #fdfdfd; }
-        .chat-btn { position: fixed; bottom: 20px; left: 20px; width: 65px; height: 65px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer; z-index: 4001; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        input, select { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        .main-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
         
-        .msg-wrapper { display: flex; gap: 8px; align-items: flex-end; }
-        .msg-wrapper.me { flex-direction: row-reverse; }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; flex-shrink: 0; }
+        /* CHAT SYSTEM */
+        #chat-popup { position: fixed; bottom: 90px; left: 20px; width: 330px; height: 500px; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); display: none; flex-direction: column; z-index: 4000; border: 1px solid var(--primary); overflow: hidden; }
+        #chat-messages { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; background: #f0f2f5; }
+        .chat-btn { position: fixed; bottom: 20px; left: 20px; width: 65px; height: 65px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer; z-index: 4001; }
         
-        .msg { padding: 10px; border-radius: 12px; max-width: 78%; font-size: 0.85rem; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .msg-me { background: var(--primary); color: white; border-bottom-right-radius: 2px; }
-        .msg-other { background: #f0f0f0; border-bottom-left-radius: 2px; color: #333; }
+        .msg { padding: 8px 12px; border-radius: 15px; max-width: 85%; font-size: 0.85rem; position: relative; cursor: pointer; }
+        .msg-me { background: #dcf8c6; color: #333; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .msg-admin { background: var(--primary); color: white; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .msg-other { background: white; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        
+        .msg-info { font-size: 0.65rem; margin-bottom: 4px; display: block; font-weight: bold; opacity: 0.7; }
+        .msg-actions { margin-top: 5px; display: flex; gap: 8px; justify-content: flex-end; }
+        .action-icon { cursor: pointer; font-size: 0.8rem; opacity: 0.5; }
 
-        .main-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 10px; color: white; text-transform: uppercase; letter-spacing: 1px; }
-        input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        .whatsapp-float { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; border-radius: 50px; padding: 12px 22px; z-index: 1000; text-decoration: none; font-weight: bold; font-size: 0.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .reply-box { background: rgba(0,0,0,0.05); padding: 5px 8px; font-size: 0.7rem; border-left: 3px solid var(--primary); margin-bottom: 5px; border-radius: 4px; }
+        #reply-preview { background: #e3e3e3; padding: 8px; font-size: 0.75rem; display: none; border-top: 1px solid #ddd; position: relative; }
+
+        .whatsapp-float { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; border-radius: 50px; padding: 12px 22px; text-decoration: none; font-weight: bold; font-size: 0.8rem; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .inline-select { padding: 2px; font-size: 0.75rem; border-radius: 4px; border: 1px solid #ccc; width: 110px; }
     </style>
 </head>
 <body>
 
-<div id="side-menu">
-    <div onclick="toggleDarkMode()">🌓 Mode Sombre / Clair</div>
-    <div onclick="promptNewEvent()">🆕 Créer un Événement</div>
-    <div onclick="exportToCSV()">📊 Exporter les données (CSV)</div>
-    <div onclick="closeMenu()">✖ Fermer</div>
-</div>
-
 <div class="header">
-    <span onclick="openMenu()" style="font-size:26px; margin-right:20px; cursor:pointer;">☰</span>
-    <div style="flex-grow:1; font-weight: 900; letter-spacing: 2px;">ONE UNIT</div>
-    <select id="event-dropdown" onchange="changeEvent(this.value)" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:6px; border-radius:5px; font-size:0.75rem;"></select>
+    <div id="live-clock" style="font-size: 0.75rem; font-family: monospace;"></div>
+    <div style="font-weight: 900;">ONE UNIT</div>
+    <div style="font-size: 0.7rem; border: 1px solid white; padding: 2px 5px; border-radius: 4px;">V4.2 GLOBAL</div>
 </div>
 
 <div class="page">
     <div class="card-box" style="text-align:center;">
-        <canvas id="paymentChart" style="max-width:150px; margin:auto;"></canvas>
-        <p id="chart-legend" style="font-size: 0.8rem; font-weight: bold; margin-top:15px; color: var(--primary);"></p>
+        <canvas id="paymentChart" style="max-width:140px; margin:auto;"></canvas>
+        <p id="chart-legend" style="font-size: 0.85rem; font-weight: bold; margin-top:10px; color: var(--primary);"></p>
     </div>
 
-    <div class="card-box">
+    <input type="text" id="memberSearch" class="search-bar" placeholder="🔍 Rechercher un membre..." onkeyup="filterMembers()">
+
+    <div class="card-box" style="overflow-x:auto;">
         <table>
-            <thead><tr><th style="text-align:left">MEMBRE</th><th>MONTANT</th><th>STATUT</th></tr></thead>
+            <thead><tr><th style="text-align:left">MEMBRE</th><th>MONTANT</th><th>DEVISE</th><th>STATUT</th></tr></thead>
             <tbody id="list"></tbody>
         </table>
     </div>
 
     <div id="admin-panel" style="display:none;" class="card-box">
-        <h4 style="margin-top:0; color:var(--primary);">ESPACE ADMIN (CHARLY)</h4>
-        <input type="text" id="name" placeholder="Nom du nouveau membre">
-        <button onclick="addMember()" class="main-btn" style="background:var(--primary)">Ajouter</button>
-        <button onclick="remindAll()" class="main-btn" style="background:var(--warning)">Rapport pour Herodote</button>
+        <h4 style="margin:0 0 12px 0; color:var(--primary);">GESTION (CHARLY)</h4>
+        <input type="text" id="m-name" placeholder="Nom du membre">
+        <div style="display:flex; gap:8px;">
+            <input type="number" id="m-amount" placeholder="Montant" style="flex:2">
+            <select id="m-curr" style="flex:2"></select>
+        </div>
+        <button onclick="addMember()" class="main-btn">AJOUTER LE MEMBRE</button>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <button onclick="exportExcel()" class="main-btn" style="background:#27ae60">📊 EXCEL</button>
+            <button onclick="sendReportToHerodote()" class="main-btn" style="background:var(--warning)">📢 RAPPORT</button>
+        </div>
     </div>
-    
-    <button onclick="askAccess()" id="lock-btn" class="main-btn" style="background:var(--primary); margin-top:10px;">Accès Administrateur</button>
+    <button onclick="askAccess()" id="lock-btn" class="main-btn">🔐 Accès Administrateur</button>
 </div>
 
 <div class="chat-btn" onclick="toggleChat()">💬</div>
 <div id="chat-popup">
-    <div style="background:var(--primary); color:white; padding:15px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
-        <span>CHAT ONE-UNIT</span>
-        <span onclick="toggleChat()" style="cursor:pointer; font-size:1.2rem;">×</span>
+    <div style="background:var(--primary); color:white; padding:15px; font-weight:bold; display:flex; justify-content:space-between;">
+        <span>CHAT LIVE</span><span onclick="toggleChat()" style="cursor:pointer;">×</span>
     </div>
     <div id="chat-messages"></div>
-    <div style="padding:12px; display:flex; gap:8px; background:white; border-top:1px solid #eee;">
-        <input type="text" id="chat-input" placeholder="Message..." style="margin:0; border-radius:25px; background:#f5f5f5; border:none; padding:10px 15px;">
-        <button onclick="sendMessage()" style="background:var(--primary); color:white; border:none; border-radius:50%; width:40px; height:40px; flex-shrink:0;">➤</button>
+    <div id="reply-preview">
+        <span id="reply-text"></span>
+        <span onclick="cancelReply()" style="position:absolute; right:10px; cursor:pointer; font-weight:bold;">×</span>
+    </div>
+    <div style="padding:10px; border-top:1px solid #eee; display:flex; flex-direction:column; gap:8px; background:white;">
+        <div style="display:flex; gap:8px;">
+            <input type="text" id="chat-input" placeholder="Message..." style="margin:0;">
+            <button onclick="sendMessage()" style="background:var(--primary); color:white; border:none; border-radius:50%; width:45px; height:45px; flex-shrink:0;">➤</button>
+        </div>
     </div>
 </div>
 
-<a href="https://wa.me/262639652738" class="whatsapp-float" target="_blank">Contacter Charly</a>
+<a href="https://wa.me/262639652738" class="whatsapp-float">📲 Contacter Charly</a>
 
 <script>
     const firebaseConfig = { apiKey: "AIzaSyB78cC9gnYCgPjd9ikZjboHqWq86-j-7YI", authDomain: "oneunit-dfa62.firebaseapp.com", databaseURL: "https://oneunit-dfa62-default-rtdb.firebaseio.com", projectId: "oneunit-dfa62", storageBucket: "oneunit-dfa62.firebasestorage.app", messagingSenderId: "837193571803", appId: "1:837193571803:web:b921421a5765c363943340" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const membersRef = db.ref('members');
-    const eventsRef = db.ref('events');
     const chatRef = db.ref('messages');
-    
-    const WEBHOOK_URL = "https://discord.com/api/webhooks/1467967472027304279/Xk8o4NVdsjdLw61AiBRqX-oJiC0q7kFJeqm6WVGZhkyNrpoSFu0Qo82glAjUuYLsP4Sx";
-    
-    let isAdmin = false; let currentEvent = "Général"; let currentData = {}; let paymentChart;
 
-    function openMenu() { document.getElementById('side-menu').style.left = '0'; }
-    function closeMenu() { document.getElementById('side-menu').style.left = '-250px'; }
-    function toggleDarkMode() { document.body.classList.toggle('dark-mode'); closeMenu(); }
-    function toggleChat() { 
-        const chat = document.getElementById('chat-popup');
-        chat.style.display = (chat.style.display === 'flex') ? 'none' : 'flex';
+    // WEBHOOK DISCORD
+    const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1467967472027304279/Xk8o4NVdsjdLw61AiBRqX-oJiC0q7kFJeqm6WVGZhkyNrpoSFu0Qo82glAjUuYLsP4Sx";
+
+    if(!localStorage.getItem('ou_uid')) localStorage.setItem('ou_uid', 'user_' + Math.random().toString(36).substr(2, 9));
+    const MY_UID = localStorage.getItem('ou_uid');
+
+    let isAdmin = false; 
+    let selectedReply = null;
+    let paymentChart;
+
+    const currencyMap = { "USD": "Dollar US", "EUR": "Euro", "BIF": "Franc Burundais", "CDF": "Franc Congolais", "ZAR": "Rand Sud-Africain", "CAD": "Dollar Canadien", "RWF": "Franc Rwandais", "XAF": "Franc CFA (BEAC)", "XOF": "Franc CFA (BCEAO)" };
+
+    function populateCurrencyOptions(selectElement, selectedValue) {
+        let html = `<optgroup label="Favoris">`;
+        ["USD", "EUR", "BIF", "CDF"].forEach(c => html += `<option value="${c}" ${c===selectedValue?'selected':''}>${c} - ${currencyMap[c]}</option>`);
+        html += `</optgroup><optgroup label="Autres">`;
+        Object.keys(currencyMap).forEach(c => { if(!["USD", "EUR", "BIF", "CDF"].includes(c)) html += `<option value="${c}" ${c===selectedValue?'selected':''}>${c} - ${currencyMap[c]}</option>`; });
+        html += `</optgroup>`;
+        selectElement.innerHTML = html;
     }
 
-    // --- ACCÈS CHARLY ---
+    setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString('fr-FR'); }, 1000);
+    populateCurrencyOptions(document.getElementById('m-curr'), "USD");
+
     function askAccess() {
         if(prompt("Code Secret Admin :") === "05102005") {
             isAdmin = true;
+            localStorage.setItem('oneunit_user', 'ADMIN (CHARLY)');
             document.getElementById('admin-panel').style.display = 'block';
             document.getElementById('lock-btn').style.display = 'none';
-            localStorage.setItem('oneunit_user', 'ADMIN (CHARLY)');
             renderList();
         }
     }
 
-    // --- CHAT MODÉRATION ---
-    function deleteMsg(id) { if(confirm("Supprimer ce message ?")) chatRef.child(id).remove(); }
-    function editMsg(id, oldText) {
-        const newText = prompt("Modifier votre message :", oldText);
-        if(newText && newText.trim() !== "") chatRef.child(id).update({ text: newText.trim() });
-    }
-
-    function stringToColor(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        return `hsl(${Math.abs(hash) % 360}, 65%, 40%)`;
-    }
-
-    function sendMessage() {
-        const input = document.getElementById('chat-input');
-        const text = input.value.trim();
-        if(!text) return;
-        let sender = isAdmin ? "ADMIN (CHARLY)" : localStorage.getItem('oneunit_user') || prompt("Entrez votre nom :");
-        if(!sender) return;
-        localStorage.setItem('oneunit_user', sender);
-        
-        chatRef.push({ name: sender, text: text, timestamp: Date.now() });
-        input.value = "";
-
-        fetch(WEBHOOK_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: "ONE-UNIT LIVE", content: `💬 **${sender}** : ${text}` })
+    function renderList() {
+        membersRef.on('value', snap => {
+            const list = document.getElementById('list'); list.innerHTML = "";
+            let p = 0, u = 0;
+            snap.forEach(child => {
+                const m = child.val();
+                m.paid ? p++ : u++;
+                list.innerHTML += `<tr class="member-row">
+                    <td class="m-name-cell" style="text-align:left; font-weight:600;">${m.name.toUpperCase()}</td>
+                    <td onclick="editAmount('${child.key}', '${m.amount}')" style="${isAdmin?'color:var(--primary); cursor:pointer; font-weight:bold;':''}">${m.amount}</td>
+                    <td>${isAdmin ? `<select class="inline-select" id="curr-${child.key}" onchange="updateMemberField('${child.key}', 'currency', this.value)"></select>` : m.currency}</td>
+                    <td>
+                        <button onclick="togglePaid('${child.key}', ${m.paid})" class="status-btn ${m.paid?'paid':'unpaid'}">${m.paid?'PAYÉ':'À PAYER'}</button>
+                        ${isAdmin ? `<button onclick="deleteMember('${child.key}')" style="background:none; border:none; color:red; cursor:pointer; font-weight:bold; margin-left:5px;">✕</button> <button onclick="printReceipt('${m.name}', '${m.amount}', '${m.currency}')" style="background:none; border:none; color:green; cursor:pointer; font-size:1rem;">🧾</button>` : ''}
+                    </td>
+                </tr>`;
+                if(isAdmin) populateCurrencyOptions(document.getElementById(`curr-${child.key}`), m.currency);
+            });
+            updateChart(p, u);
         });
     }
 
+    function filterMembers() {
+        const query = document.getElementById('memberSearch').value.toUpperCase();
+        const rows = document.querySelectorAll('.member-row');
+        rows.forEach(row => { row.style.display = row.querySelector('.m-name-cell').innerText.includes(query) ? "" : "none"; });
+    }
+
+    function addMember() {
+        const name = document.getElementById('m-name').value;
+        const amount = document.getElementById('m-amount').value || 0;
+        const curr = document.getElementById('m-curr').value;
+        if(name) {
+            membersRef.push({ name, amount, currency: curr, paid: false });
+            sendDiscordNotification(`✅ **Nouveau membre ajouté**\n👤 Nom: ${name.toUpperCase()}\n💰 Montant: ${amount} ${curr}\n📅 Date: ${new Date().toLocaleString()}`);
+            document.getElementById('m-name').value = ""; document.getElementById('m-amount').value = "";
+        }
+    }
+
+    function sendDiscordNotification(msg) {
+        fetch(DISCORD_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: msg }) });
+    }
+
+    function printReceipt(name, amount, curr) {
+        const w = window.open('', '', 'width=400,height=500');
+        w.document.write(`<html><body style="font-family:sans-serif; text-align:center; padding:20px; border:5px double #0a3d62;">
+            <h2>ONE UNIT</h2><p>Reçu de Paiement</p><hr>
+            <div style="text-align:left;">
+                <p>Membre: <b>${name.toUpperCase()}</b></p>
+                <p>Montant: <b>${amount} ${curr}</b></p>
+                <p>Date: ${new Date().toLocaleString()}</p>
+                <p>Statut: <b>PAYÉ ✅</b></p>
+            </div><hr><p style="font-size:0.7rem;">Signature Charly</p>
+        </body></html>`);
+        w.print();
+    }
+
+    // CHAT LOGIC
+    function toggleChat() { const c = document.getElementById('chat-popup'); c.style.display = (c.style.display === 'flex') ? 'none' : 'flex'; }
+    function sendMessage() {
+        const input = document.getElementById('chat-input');
+        if(!input.value.trim()) return;
+        const sender = isAdmin ? "ADMIN (CHARLY)" : (localStorage.getItem('oneunit_user') || prompt("Pseudo :") || "Anonyme");
+        localStorage.setItem('oneunit_user', sender);
+        chatRef.push({ uid: MY_UID, name: sender, text: input.value, timestamp: Date.now(), replyTo: selectedReply, isAdmin: isAdmin });
+        input.value = ""; cancelReply();
+    }
     chatRef.limitToLast(30).on('value', snap => {
         const box = document.getElementById('chat-messages'); box.innerHTML = "";
-        const myName = isAdmin ? "ADMIN (CHARLY)" : localStorage.getItem('oneunit_user');
-
-        snap.forEach(child => {
-            const m = child.val();
-            const id = child.key;
-            const isMe = (m.name === myName);
-            
-            let actions = "";
-            if(isAdmin) {
-                actions = `<span onclick="deleteMsg('${id}')" style="color:red; cursor:pointer; font-size:0.6rem; font-weight:bold;">[SUPPRIMER]</span>`;
-            } else if(isMe) {
-                actions = `<span onclick="editMsg('${id}','${m.text}')" style="color:blue; cursor:pointer; font-size:0.6rem; margin-right:5px;">Modifier</span>
-                           <span onclick="deleteMsg('${id}')" style="color:orange; cursor:pointer; font-size:0.6rem;">Effacer</span>`;
-            }
-
-            box.innerHTML += `
-                <div class="msg-wrapper ${isMe?'me':''}">
-                    <div class="avatar" style="background:${stringToColor(m.name)}">${m.name[0]}</div>
-                    <div class="msg ${isMe?'msg-me':'msg-other'}">
-                        <div style="font-size:0.6rem; font-weight:bold; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
-                            <span>${m.name.toUpperCase()}</span> ${actions}
-                        </div>
-                        ${m.text}
-                    </div>
-                </div>`;
+        snap.forEach(c => {
+            const m = c.val(); const key = c.key;
+            const isMe = (m.uid === MY_UID);
+            const msgClass = isMe ? "msg-me" : (m.isAdmin ? "msg-admin" : "msg-other");
+            let rHtml = m.replyTo ? `<div class="reply-box">↩️ ${m.replyTo.text.substring(0,30)}</div>` : "";
+            box.innerHTML += `<div class="msg ${msgClass}" onclick="prepareReply('${key}', '${m.name}', '${m.text.replace(/'/g, "\\'")}')">
+                <span class="msg-info">${m.name}</span>${rHtml}${m.text}
+                <div class="msg-actions">
+                    ${isMe ? `<span class="action-icon" onclick="editMsg('${key}','${m.text}')">✏️</span>` : ''}
+                    ${isMe || isAdmin ? `<span class="action-icon" onclick="deleteMsg('${key}')">🗑️</span>` : ''}
+                </div>
+            </div>`;
         });
         box.scrollTop = box.scrollHeight;
     });
 
-    // --- GESTION ---
-    function renderList() {
-        const list = document.getElementById('list'); list.innerHTML = "";
-        let p = 0, u = 0;
-        Object.keys(currentData).forEach(key => {
-            const m = currentData[key]; if(m.event !== currentEvent) return;
-            m.paid ? p++ : u++;
-            list.innerHTML += `<tr>
-                <td style="text-align:left; font-weight:600;">${m.name.toUpperCase()}</td>
-                <td>${m.amount} ${m.currency}</td>
-                <td>
-                    <button onclick="togglePaid('${key}', ${m.paid})" class="status-btn ${m.paid ? 'paid' : 'unpaid'}">${m.paid ? 'PAYÉ' : 'À PAYER'}</button>
-                    ${isAdmin ? `<button onclick="deleteMember('${key}')" class="del-btn">DEL</button>` : ''}
-                </td>
-            </tr>`;
-        });
-        updateChart(p, u);
+    function prepareReply(key, name, text) {
+        selectedReply = { name, text };
+        document.getElementById('reply-preview').style.display = 'block';
+        document.getElementById('reply-text').innerText = `Répondre à ${name}: ${text.substring(0,20)}...`;
     }
+    function cancelReply() { selectedReply = null; document.getElementById('reply-preview').style.display = 'none'; }
+    function deleteMsg(k) { if(confirm("Supprimer ?")) chatRef.child(k).remove(); }
+    function editMsg(k, t) { const n = prompt("Modifier :", t); if(n) chatRef.child(k).update({ text: n }); }
 
-    function togglePaid(k, s) { if(isAdmin) membersRef.child(k).update({paid: !s}); }
-    function deleteMember(k) { if(confirm("Supprimer ce membre ?")) membersRef.child(k).remove(); }
-    function addMember() { const n = document.getElementById('name').value; if(n) membersRef.push({name:n, amount:0, currency:"USD", paid:false, event:currentEvent}); }
-    
-    function updateChart(paid, unpaid) {
+    function updateChart(p, u) {
         const ctx = document.getElementById('paymentChart').getContext('2d');
         if (paymentChart) paymentChart.destroy();
-        paymentChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: { datasets: [{ data: [paid, unpaid], backgroundColor: ['#27ae60', '#c0392b'], borderWidth: 0 }] },
-            options: { cutout: '80%' }
-        });
-        document.getElementById('chart-legend').innerText = `${paid} PAYÉS / ${unpaid} À PAYER`;
+        paymentChart = new Chart(ctx, { type: 'doughnut', data: { datasets: [{ data: [p, u], backgroundColor: ['#27ae60', '#c0392b'], borderWidth: 0 }] } });
+        document.getElementById('chart-legend').innerText = `${p} PAYÉS / ${u} EN ATTENTE`;
     }
 
-    membersRef.on('value', snap => { currentData = snap.val() || {}; renderList(); });
-    eventsRef.on('value', snap => {
-        const drop = document.getElementById('event-dropdown'); drop.innerHTML = '<option value="Général">GENERAL</option>';
-        if(snap.val()) Object.values(snap.val()).forEach(ev => drop.innerHTML += `<option value="${ev.name}">${ev.name}</option>`);
-    });
-    function changeEvent(v) { currentEvent = v; renderList(); }
-    document.getElementById('chat-input').addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+    function updateMemberField(id, field, value) { membersRef.child(id).update({ [field]: value }); }
+    function editAmount(id, old) { if(isAdmin) { const n = prompt("Montant :", old); if(n) updateMemberField(id, 'amount', n); } }
+    function togglePaid(id, s) { if(isAdmin) updateMemberField(id, 'paid', !s); }
+    function deleteMember(id) { if(confirm("Supprimer ?")) membersRef.child(id).remove(); }
+
+    renderList();
 </script>
 </body>
 </html>
-
